@@ -1,7 +1,10 @@
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { BackgroundCanvas } from "@/components/BackgroundCanvas";
-import type { VideoItem, VideoSource } from "@/engine/config";
+import type { VideoItem, VideoSource, SlideBackground } from "@/engine/config";
 import { sanitizeBackground } from "@/lib/cssSanitize";
+
+/** "base" = only the base effect, a number = only that effect layer. */
+export type SoloLayer = "base" | number | null;
 
 interface MiniStageProps {
   slide: VideoItem;
@@ -10,6 +13,8 @@ interface MiniStageProps {
   active?: boolean;
   /** Show the per-slide multi-video sources stack. Defaults true. */
   withSources?: boolean;
+  /** Render only one layer of the stack, for "what does this layer do?". */
+  soloLayer?: SoloLayer;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -25,6 +30,7 @@ export const MiniStage = memo(function MiniStage({
   transitionDuration,
   active = true,
   withSources = true,
+  soloLayer = null,
   className,
   style,
 }: MiniStageProps) {
@@ -45,10 +51,18 @@ export const MiniStage = memo(function MiniStage({
     else v.pause();
   }, [slide.src, active]);
 
-  const bg = slide.background;
+  const bg = useMemo<SlideBackground>(() => {
+    const base = slide.background;
+    if (soloLayer === null || soloLayer === undefined) return base;
+    if (soloLayer === "base") return { ...base, effectLayers: [], secondaryEffect: null };
+    const layer = base.effectLayers?.[soloLayer];
+    if (!layer) return base;
+    return { ...base, opacity: 0, secondaryEffect: null, effectLayers: [{ ...layer, opacity: 1 }] };
+  }, [slide.background, soloLayer]);
+
 
   return (
-    <div className={className} style={{ position: "relative", overflow: "hidden", background: "#000", ...style }}>
+    <div className={className} style={{ position: "relative", overflow: "hidden", background: "#000", transform: "translateZ(0)", contain: "paint", ...style }}>
       <div className="absolute inset-0">
         {active ? (
           <BackgroundCanvas background={bg} transitionDuration={transitionDuration} />

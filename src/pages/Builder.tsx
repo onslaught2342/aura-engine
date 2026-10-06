@@ -1,117 +1,39 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
-import { CONFIG, type EngineConfig, type VideoItem, type SlideBackground, type SlideTransition, type TransitionType, type TransitionEasing, type VideoSource, type EffectLayer, type BackgroundConfig } from "@/engine/config";
-import { backgroundRegistry } from "@/engine/backgrounds/registry";
+import { CONFIG, type EngineConfig, type VideoItem, type SlideTransition, type VideoSource, type BackgroundConfig } from "@/engine/config";
 import { EFFECT_NAMES } from "@/engine/effectNames";
 import { builderStore } from "@/lib/builderStore";
-import { FIELD_HELP } from "@/lib/fieldHelp";
-import { MiniStage } from "@/components/builder/MiniStage";
-import { ImpactPeek, ImpactPreview, type ImpactVariant } from "@/components/builder/ImpactPreview";
-import { HelpDot } from "@/components/builder/HelpDot";
+import { MiniStage, type SoloLayer } from "@/components/builder/MiniStage";
+import { ImpactPreview } from "@/components/builder/ImpactPreview";
 import { BuilderAmbient } from "@/components/builder/BuilderAmbient";
+import { LayerStack } from "@/components/builder/LayerStack";
+import { SchemaGroups, EFFECT_KEYS } from "@/components/builder/SchemaField";
 import { impactBus, type ImpactState } from "@/lib/impactBus";
+import {
+  GLOBAL_SECTIONS, SLIDE_GROUPS, SLIDE_BEHAVIOR_FIELDS, SOURCE_GROUPS, TRANSITION_FIELDS, GLOBAL_BG_FIELDS, LAYER_GROUPS,
+} from "@/lib/configSchema";
+import { normalizeConfig, normalizeSlide, serializeConfig } from "@/lib/configNormalize";
 
-const EFFECT_KEYS = Object.keys(backgroundRegistry);
-const TRANSITION_TYPES: TransitionType[] = [
-  "fade","wipeLeft","wipeRight","wipeUp","wipeDown",
-  "slideLeft","slideRight","slideUp","slideDown",
-  "zoomIn","zoomOut","zoomRotate",
-  "flipX","flipY","blur","dissolve","iris",
-  "swirl","curtain","glitch",
-  "splitHorizontal","splitVertical","rotate","bounce","morph",
-  "pixelate","blinds","diamond","crossZoom","doorway",
-];
-const EASINGS: TransitionEasing[] = ["linear","ease","ease-in","ease-out","ease-in-out"];
-const BLEND_MODES: GlobalCompositeOperation[] = [
-  "source-over","multiply","screen","overlay","darken","lighten","color-dodge","color-burn",
-  "hard-light","soft-light","difference","exclusion","hue","saturation","color","luminosity",
-];
-const COLOR_MODES = ["solid","gradient","rainbow","temperature"] as const;
-const ADVANCE_MODES = ["inherit","on","off"] as const;
+const DRAFT_KEY = "aura.builder.draft.v2";
 
-const emptyConfig = (): EngineConfig => structuredClone(CONFIG);
-const emptySlide = (): VideoItem => ({
-  src: "",
-  loop: false,
-  muted: true,
+const emptySlide = (): VideoItem => normalizeSlide({
   transition: structuredClone(CONFIG.defaults.defaultTransition),
-  sources: [],
   background: structuredClone(CONFIG.defaults.background),
-  autoAdvance: "inherit",
 });
 const emptySource = (): VideoSource => structuredClone(CONFIG.defaults.videoSource);
-const emptyLayer = (): EffectLayer => structuredClone(CONFIG.defaults.effectLayer);
 
 // ── Shared style helpers ───────────────────────────────────
-const btn = "h-7 px-3 inline-flex items-center justify-center text-[11px] font-mono uppercase tracking-wider rounded border border-white/15 hover:border-white/40 hover:bg-white/5 text-white/80 transition";
-const btnPrimary = "h-7 px-3 inline-flex items-center justify-center text-[11px] font-mono uppercase tracking-wider rounded border border-white/60 bg-white/15 hover:bg-white/20 text-white transition";
+const btn = "h-7 px-3 whitespace-nowrap shrink-0 inline-flex items-center justify-center text-[11px] font-mono uppercase tracking-wider rounded border border-white/15 hover:border-white/40 hover:bg-white/5 text-white/80 transition disabled:opacity-30 disabled:pointer-events-none";
+const btnPrimary = "h-7 px-3 whitespace-nowrap shrink-0 inline-flex items-center justify-center text-[11px] font-mono uppercase tracking-wider rounded border border-white/60 bg-white/15 hover:bg-white/20 text-white transition";
 const btnGhost = "h-6 px-2 text-[10px] font-mono uppercase tracking-wider rounded text-white/50 hover:text-white hover:bg-white/5 transition";
-const inputCls = "w-full bg-white/5 border border-white/10 rounded px-2.5 py-1 text-xs font-mono text-white/90 placeholder:text-white/25 outline-none focus:border-white/40 focus:bg-white/[0.07] transition-colors";
 
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/40 mb-2 mt-5 first:mt-0">{children}</div>
-);
+const SLIDE_DEFAULTS = emptySlide() as unknown as Record<string, unknown>;
+const SOURCE_DEFAULTS = CONFIG.defaults.videoSource as unknown as Record<string, unknown>;
+const TRANSITION_DEFAULTS = CONFIG.defaults.defaultTransition as unknown as Record<string, unknown>;
+const asRec = (v: unknown) => v as Record<string, unknown>;
 
-// HelpDot is imported from ./components/builder/HelpDot
-
-// ── Row with help + on-demand impact peek ──────────────
-interface ImpactSpec {
-  slide: VideoItem;
-  path: string;
-  variant: ImpactVariant;
-  current: unknown;
-  transitionDuration: number;
-}
-interface RowProps {
-  label: string;
-  help?: string;
-  impact?: ImpactSpec;
-  children: React.ReactNode;
-}
-const Row = memo(function Row({ label, help, impact, children }: RowProps) {
-  return (
-    <div className="py-1.5 border-b border-white/[0.04] last:border-b-0">
-      <div className="grid grid-cols-[8.5rem_1fr] gap-3 items-center">
-        <label className="text-[10px] font-mono uppercase tracking-wider text-white/45 truncate flex items-center">
-          <span className="truncate">{label}</span>
-          <HelpDot text={help} />
-          {impact && (
-            <ImpactPeek
-              slide={impact.slide}
-              path={impact.path}
-              variant={impact.variant}
-              current={impact.current}
-              transitionDuration={impact.transitionDuration}
-              label={label}
-            />
-          )}
-        </label>
-        <div className="min-w-0">{children}</div>
-      </div>
-    </div>
-  );
-});
-
-// ── Reusable input components ───────────────────────────
-const TextField = ({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) => (
-  <input type="text" value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={inputCls} />
-);
-const NumField = ({ value, onChange, step = 1, min, max }: { value: number; onChange: (v: number) => void; step?: number; min?: number; max?: number }) => (
-  <input type="number" value={Number.isFinite(value) ? value : 0} step={step} min={min} max={max}
-    onChange={(e) => { const n = parseFloat(e.target.value); onChange(Number.isFinite(n) ? n : 0); }}
-    className={inputCls} />
-);
-const BoolField = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
-  <input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} className="accent-white/80 h-4 w-4" />
-);
-const SelectField = <T extends string,>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: readonly T[] }) => (
-  <select value={value} onChange={(e) => onChange(e.target.value as T)} className={inputCls}>
-    {options.map((o) => <option key={o} value={o} className="bg-zinc-900">{o || "(none)"}</option>)}
-  </select>
-);
-
-// ── Card wrapper for list items (sources, layers) ──────
+// ── Card wrapper for list items ────────────────────────
 const Card = ({ title, onUp, onDown, onDup, onDel, children, idx }: {
   title: string; idx: number; onUp: () => void; onDown: () => void; onDup: () => void; onDel: () => void; children: React.ReactNode;
 }) => (
@@ -124,459 +46,163 @@ const Card = ({ title, onUp, onDown, onDup, onDel, children, idx }: {
       <button className={btnGhost} onClick={onDup}>dup</button>
       <button className={btnGhost + " hover:!text-red-400"} onClick={onDel}>del</button>
     </div>
-    <div className="px-3 py-2">{children}</div>
+    <div className="px-3 pt-2">{children}</div>
   </div>
 );
 
-// ── Background editor ──────────────────────────────────
-const BackgroundEditor = memo(function BackgroundEditor({ bg, slide, transitionDuration, onChange }: {
-  bg: SlideBackground; slide: VideoItem; transitionDuration: number; onChange: (b: SlideBackground) => void;
-}) {
-  const set = <K extends keyof SlideBackground,>(k: K, v: SlideBackground[K]) => onChange({ ...bg, [k]: v });
-  const ip = (path: string, variant: ImpactVariant, current: unknown): ImpactSpec =>
-    ({ slide, path, variant, current, transitionDuration });
-
-  const setLayers = (layers: EffectLayer[]) => set("effectLayers", layers);
-  const addLayer = () => setLayers([...(bg.effectLayers ?? []), emptyLayer()]);
-  const updLayer = (i: number, l: EffectLayer) => setLayers(bg.effectLayers.map((x, j) => j === i ? l : x));
-  const delLayer = (i: number) => setLayers(bg.effectLayers.filter((_, j) => j !== i));
-  const dupLayer = (i: number) => { const next = [...bg.effectLayers]; next.splice(i + 1, 0, structuredClone(next[i])); setLayers(next); };
-  const moveLayer = (i: number, d: -1 | 1) => {
-    const next = [...bg.effectLayers]; const j = i + d; if (j < 0 || j >= next.length) return;
-    [next[i], next[j]] = [next[j], next[i]]; setLayers(next);
-  };
-
-  return (
-    <div>
-      <SectionLabel>Effect</SectionLabel>
-      <Row label="Effect" help={FIELD_HELP["bg.type"]}>
-        <SelectField value={bg.type} onChange={(v) => set("type", v)} options={EFFECT_KEYS as readonly string[]} />
-      </Row>
-      <Row label="Color (hue)" help={FIELD_HELP["bg.color"]}><TextField value={bg.color} onChange={(v) => set("color", v)} /></Row>
-      <Row label="Opacity" help={FIELD_HELP["bg.opacity"]} impact={ip("background.opacity", { kind: "range01" }, bg.opacity)}>
-        <NumField value={bg.opacity} step={0.05} min={0} max={1} onChange={(v) => set("opacity", v)} />
-      </Row>
-      <Row label="Blend" help={FIELD_HELP["bg.blendMode"]}><SelectField value={bg.blendMode} onChange={(v) => set("blendMode", v)} options={BLEND_MODES} /></Row>
-      <Row label="Saturation" help={FIELD_HELP["bg.saturation"]} impact={ip("background.saturation", { kind: "range100" }, bg.saturation)}>
-        <NumField value={bg.saturation} onChange={(v) => set("saturation", v)} />
-      </Row>
-      <Row label="Brightness" help={FIELD_HELP["bg.brightness"]} impact={ip("background.brightness", { kind: "range100" }, bg.brightness)}>
-        <NumField value={bg.brightness} onChange={(v) => set("brightness", v)} />
-      </Row>
-      <Row label="Speed" help={FIELD_HELP["bg.speed"]} impact={ip("background.speed", { kind: "scalar" }, bg.speed)}>
-        <NumField value={bg.speed} step={0.1} onChange={(v) => set("speed", v)} />
-      </Row>
-      <Row label="Intensity" help={FIELD_HELP["bg.intensity"]} impact={ip("background.intensity", { kind: "range100" }, bg.intensity)}>
-        <NumField value={bg.intensity} onChange={(v) => set("intensity", v)} />
-      </Row>
-      <Row label="Scale" help={FIELD_HELP["bg.scale"]} impact={ip("background.scale", { kind: "scalar" }, bg.scale)}>
-        <NumField value={bg.scale} step={0.1} onChange={(v) => set("scale", v)} />
-      </Row>
-      <Row label="Turbulence" help={FIELD_HELP["bg.turbulence"]} impact={ip("background.turbulence", { kind: "range100" }, bg.turbulence)}>
-        <NumField value={bg.turbulence} onChange={(v) => set("turbulence", v)} />
-      </Row>
-      <Row label="Direction" help={FIELD_HELP["bg.direction"]} impact={ip("background.direction", { kind: "range360" }, bg.direction)}>
-        <NumField value={bg.direction} onChange={(v) => set("direction", v)} />
-      </Row>
-
-      <SectionLabel>Filters &amp; overlays</SectionLabel>
-      <Row label="Bg gradient" help={FIELD_HELP["bg.backgroundGradient"]}>
-        <TextField value={bg.backgroundGradient} onChange={(v) => set("backgroundGradient", v)} placeholder="linear-gradient(...)" />
-      </Row>
-      <Row label="Vignette" help={FIELD_HELP["bg.vignetteStrength"]} impact={ip("background.vignetteStrength", { kind: "range01" }, bg.vignetteStrength)}>
-        <NumField value={bg.vignetteStrength} step={0.05} min={0} max={1} onChange={(v) => set("vignetteStrength", v)} />
-      </Row>
-      <Row label="Vignette color" help={FIELD_HELP["bg.vignetteColor"]}><TextField value={bg.vignetteColor} onChange={(v) => set("vignetteColor", v)} /></Row>
-      <Row label="Color filter" help={FIELD_HELP["bg.colorFilter"]}><TextField value={bg.colorFilter} onChange={(v) => set("colorFilter", v)} placeholder="hue-rotate(45deg)" /></Row>
-      <Row label="Motion blur" help={FIELD_HELP["bg.motionBlur"]} impact={ip("background.motionBlur", { kind: "scalar" }, bg.motionBlur || 1)}>
-        <NumField value={bg.motionBlur} onChange={(v) => set("motionBlur", v)} />
-      </Row>
-      <Row label="Pixelate" help={FIELD_HELP["bg.pixelate"]} impact={ip("background.pixelate", { kind: "scalar" }, bg.pixelate || 4)}>
-        <NumField value={bg.pixelate} onChange={(v) => set("pixelate", v)} />
-      </Row>
-      <Row label="Scanlines" help={FIELD_HELP["bg.scanlines"]} impact={ip("background.scanlines", { kind: "bool" }, bg.scanlines)}>
-        <BoolField value={bg.scanlines} onChange={(v) => set("scanlines", v)} />
-      </Row>
-      <Row label="Scanline ↕" help={FIELD_HELP["bg.scanlineIntensity"]}><NumField value={bg.scanlineIntensity} onChange={(v) => set("scanlineIntensity", v)} /></Row>
-      <Row label="Film grain" help={FIELD_HELP["bg.filmGrain"]} impact={ip("background.filmGrain", { kind: "range100" }, bg.filmGrain)}>
-        <NumField value={bg.filmGrain} onChange={(v) => set("filmGrain", v)} />
-      </Row>
-      <Row label="Chroma key" help={FIELD_HELP["bg.chromaKey"]}><TextField value={bg.chromaKey} onChange={(v) => set("chromaKey", v)} /></Row>
-      <Row label="Chroma thr." help={FIELD_HELP["bg.chromaKeyThreshold"]}><NumField value={bg.chromaKeyThreshold} onChange={(v) => set("chromaKeyThreshold", v)} /></Row>
-
-      <SectionLabel>Secondary layer (legacy)</SectionLabel>
-      <Row label="2nd effect" help={FIELD_HELP["bg.secondaryEffect"]}>
-        <SelectField value={bg.secondaryEffect ?? ""} onChange={(v) => set("secondaryEffect", v || null)} options={["", ...EFFECT_KEYS] as readonly string[]} />
-      </Row>
-      <Row label="2nd opacity" help={FIELD_HELP["bg.secondaryOpacity"]} impact={ip("background.secondaryOpacity", { kind: "range01" }, bg.secondaryOpacity)}>
-        <NumField value={bg.secondaryOpacity} step={0.05} min={0} max={1} onChange={(v) => set("secondaryOpacity", v)} />
-      </Row>
-      <Row label="2nd color" help={FIELD_HELP["bg.secondaryColor"]}><TextField value={bg.secondaryColor} onChange={(v) => set("secondaryColor", v)} /></Row>
-
-      <SectionLabel>Effect layers ({bg.effectLayers?.length ?? 0})</SectionLabel>
-      <p className="text-[10px] font-mono text-white/40 mb-2 leading-relaxed">
-        Stack multiple procedural effects on top of the base effect. Each layer has its own color, blend, and motion.
-      </p>
-      {(bg.effectLayers ?? []).map((layer, i) => (
-        <Card key={i} idx={i}
-          title={`${EFFECT_NAMES[layer.type] ?? layer.type} · ${layer.blendMode}`}
-          onUp={() => moveLayer(i, -1)} onDown={() => moveLayer(i, 1)} onDup={() => dupLayer(i)} onDel={() => delLayer(i)}>
-          <EffectLayerEditor layer={layer} slide={slide} layerIndex={i} transitionDuration={transitionDuration} onChange={(l) => updLayer(i, l)} />
-        </Card>
-      ))}
-      <button className={btn} onClick={addLayer}>+ Add effect layer</button>
-    </div>
-  );
-});
-
-// ── Effect layer editor ────────────────────────────────
-const EffectLayerEditor = memo(function EffectLayerEditor({ layer, slide, layerIndex, transitionDuration, onChange }: {
-  layer: EffectLayer; slide: VideoItem; layerIndex: number; transitionDuration: number; onChange: (l: EffectLayer) => void;
-}) {
-  const set = <K extends keyof EffectLayer,>(k: K, v: EffectLayer[K]) => onChange({ ...layer, [k]: v });
-  const ip = (field: keyof EffectLayer, variant: ImpactVariant, current: unknown): ImpactSpec =>
-    ({ slide, path: `background.effectLayers.${layerIndex}.${String(field)}`, variant, current, transitionDuration });
-  return (
-    <div>
-      <Row label="Effect" help={FIELD_HELP["layer.type"]}><SelectField value={layer.type} onChange={(v) => set("type", v)} options={EFFECT_KEYS as readonly string[]} /></Row>
-      <Row label="Opacity" help={FIELD_HELP["layer.opacity"]} impact={ip("opacity", { kind: "range01" }, layer.opacity)}><NumField value={layer.opacity} step={0.05} min={0} max={1} onChange={(v) => set("opacity", v)} /></Row>
-      <Row label="Blend" help={FIELD_HELP["layer.blendMode"]}><SelectField value={layer.blendMode} onChange={(v) => set("blendMode", v)} options={BLEND_MODES} /></Row>
-      <Row label="Color (hue)" help={FIELD_HELP["layer.color"]}><TextField value={layer.color} onChange={(v) => set("color", v)} /></Row>
-      <Row label="Color 2" help={FIELD_HELP["layer.colorSecondary"]}><TextField value={layer.colorSecondary} onChange={(v) => set("colorSecondary", v)} /></Row>
-      <Row label="Color mode" help={FIELD_HELP["layer.colorMode"]}><SelectField value={layer.colorMode} onChange={(v) => set("colorMode", v)} options={COLOR_MODES} /></Row>
-      <Row label="Intensity" help={FIELD_HELP["layer.intensity"]} impact={ip("intensity", { kind: "range100" }, layer.intensity)}><NumField value={layer.intensity} onChange={(v) => set("intensity", v)} /></Row>
-      <Row label="Scale" help={FIELD_HELP["layer.scale"]} impact={ip("scale", { kind: "scalar" }, layer.scale)}><NumField value={layer.scale} step={0.1} onChange={(v) => set("scale", v)} /></Row>
-      <Row label="Speed" help={FIELD_HELP["layer.speed"]} impact={ip("speed", { kind: "scalar" }, layer.speed)}><NumField value={layer.speed} step={0.1} onChange={(v) => set("speed", v)} /></Row>
-      <Row label="Turbulence" help={FIELD_HELP["layer.turbulence"]} impact={ip("turbulence", { kind: "range100" }, layer.turbulence)}><NumField value={layer.turbulence} onChange={(v) => set("turbulence", v)} /></Row>
-      <Row label="Direction" help={FIELD_HELP["layer.direction"]} impact={ip("direction", { kind: "range360" }, layer.direction)}><NumField value={layer.direction} onChange={(v) => set("direction", v)} /></Row>
-      <Row label="Saturation" help={FIELD_HELP["layer.saturation"]} impact={ip("saturation", { kind: "range100" }, layer.saturation)}><NumField value={layer.saturation} onChange={(v) => set("saturation", v)} /></Row>
-      <Row label="Brightness" help={FIELD_HELP["layer.brightness"]} impact={ip("brightness", { kind: "range100" }, layer.brightness)}><NumField value={layer.brightness} onChange={(v) => set("brightness", v)} /></Row>
-      <Row label="Particles" help={FIELD_HELP["layer.particleCount"]} impact={ip("particleCount", { kind: "scalar" }, layer.particleCount)}><NumField value={layer.particleCount} onChange={(v) => set("particleCount", v)} /></Row>
-      <Row label="Blur" help={FIELD_HELP["layer.blur"]} impact={ip("blur", { kind: "scalar" }, layer.blur || 1)}><NumField value={layer.blur} onChange={(v) => set("blur", v)} /></Row>
-      <Row label="Glow" help={FIELD_HELP["layer.glow"]} impact={ip("glow", { kind: "range100" }, layer.glow)}><NumField value={layer.glow} onChange={(v) => set("glow", v)} /></Row>
-      <Row label="Rotation" help={FIELD_HELP["layer.rotation"]} impact={ip("rotation", { kind: "range360" }, layer.rotation)}><NumField value={layer.rotation} onChange={(v) => set("rotation", v)} /></Row>
-      <Row label="Mirror" help={FIELD_HELP["layer.mirror"]} impact={ip("mirror", { kind: "bool" }, layer.mirror)}><BoolField value={layer.mirror} onChange={(v) => set("mirror", v)} /></Row>
-      <Row label="Invert" help={FIELD_HELP["layer.invert"]} impact={ip("invert", { kind: "bool" }, layer.invert)}><BoolField value={layer.invert} onChange={(v) => set("invert", v)} /></Row>
-      <Row label="Noise" help={FIELD_HELP["layer.noiseAmount"]} impact={ip("noiseAmount", { kind: "range100" }, layer.noiseAmount)}><NumField value={layer.noiseAmount} onChange={(v) => set("noiseAmount", v)} /></Row>
-      <Row label="Frequency" help={FIELD_HELP["layer.frequency"]} impact={ip("frequency", { kind: "scalar" }, layer.frequency)}><NumField value={layer.frequency} step={0.1} onChange={(v) => set("frequency", v)} /></Row>
-      <Row label="Amplitude" help={FIELD_HELP["layer.amplitude"]} impact={ip("amplitude", { kind: "range100" }, layer.amplitude)}><NumField value={layer.amplitude} onChange={(v) => set("amplitude", v)} /></Row>
-      <Row label="Phase" help={FIELD_HELP["layer.phase"]} impact={ip("phase", { kind: "range360" }, layer.phase)}><NumField value={layer.phase} onChange={(v) => set("phase", v)} /></Row>
-      <Row label="Decay" help={FIELD_HELP["layer.decay"]} impact={ip("decay", { kind: "range100" }, layer.decay)}><NumField value={layer.decay} onChange={(v) => set("decay", v)} /></Row>
-    </div>
-  );
-});
-
-// ── Video source editor (one per source) ───────────────
-const VideoSourceEditor = memo(function VideoSourceEditor({ src, slide, idx, transitionDuration, onChange }: {
-  src: VideoSource; slide: VideoItem; idx: number; transitionDuration: number; onChange: (s: VideoSource) => void;
-}) {
-  const set = <K extends keyof VideoSource,>(k: K, v: VideoSource[K]) => onChange({ ...src, [k]: v });
-  const ip = (field: keyof VideoSource, variant: ImpactVariant, current: unknown): ImpactSpec =>
-    ({ slide, path: `sources.${idx}.${String(field)}`, variant, current, transitionDuration });
-  return (
-    <div>
-      <Row label="Video URL" help={FIELD_HELP["src.src"]}><TextField value={src.src} onChange={(v) => set("src", v)} placeholder="https://…" /></Row>
-      <Row label="X (%)" help={FIELD_HELP["src.x"]} impact={ip("x", { kind: "range100" }, src.x)}><NumField value={src.x} onChange={(v) => set("x", v)} /></Row>
-      <Row label="Y (%)" help={FIELD_HELP["src.y"]} impact={ip("y", { kind: "range100" }, src.y)}><NumField value={src.y} onChange={(v) => set("y", v)} /></Row>
-      <Row label="Width (%)" help={FIELD_HELP["src.width"]} impact={ip("width", { kind: "range100" }, src.width)}><NumField value={src.width} onChange={(v) => set("width", v)} /></Row>
-      <Row label="Height (%)" help={FIELD_HELP["src.height"]} impact={ip("height", { kind: "range100" }, src.height)}><NumField value={src.height} onChange={(v) => set("height", v)} /></Row>
-      <Row label="Fit" help={FIELD_HELP["src.fit"]} impact={ip("fit", { kind: "select", a: "contain", b: "cover" }, src.fit)}><SelectField value={src.fit} onChange={(v) => set("fit", v)} options={["contain","cover"] as const} /></Row>
-      <Row label="Opacity" help={FIELD_HELP["src.opacity"]} impact={ip("opacity", { kind: "range01" }, src.opacity)}>
-        <NumField value={src.opacity} step={0.05} min={0} max={1} onChange={(v) => set("opacity", v)} />
-      </Row>
-      <Row label="Z-index" help={FIELD_HELP["src.zIndex"]}><NumField value={src.zIndex} onChange={(v) => set("zIndex", v)} /></Row>
-      <Row label="Loop" help={FIELD_HELP["src.loop"]}><BoolField value={src.loop} onChange={(v) => set("loop", v)} /></Row>
-      <Row label="Muted" help={FIELD_HELP["src.muted"]}><BoolField value={src.muted} onChange={(v) => set("muted", v)} /></Row>
-      <Row label="Volume" help={FIELD_HELP["src.volume"]}><NumField value={src.volume ?? 1} step={0.05} min={0} max={1} onChange={(v) => set("volume", v)} /></Row>
-      <Row label="Border radius" help={FIELD_HELP["src.borderRadius"]} impact={ip("borderRadius", { kind: "scalar" }, src.borderRadius || 8)}><NumField value={src.borderRadius} onChange={(v) => set("borderRadius", v)} /></Row>
-      <Row label="Rotation" help={FIELD_HELP["src.rotation"]} impact={ip("rotation", { kind: "range360" }, src.rotation)}>
-        <NumField value={src.rotation} onChange={(v) => set("rotation", v)} />
-      </Row>
-      <Row label="Filter" help={FIELD_HELP["src.filter"]} impact={ip("filter", { kind: "select", a: "", b: src.filter || "blur(4px)", labelA: "Off", labelB: "On" }, src.filter)}><TextField value={src.filter} onChange={(v) => set("filter", v)} placeholder="blur(2px) brightness(1.2)" /></Row>
-      <Row label="Blend" help={FIELD_HELP["src.blendMode"]} impact={ip("blendMode", { kind: "select", a: "source-over", b: src.blendMode === "source-over" ? "screen" : src.blendMode, labelA: "normal", labelB: "blend" }, src.blendMode)}><SelectField value={src.blendMode} onChange={(v) => set("blendMode", v)} options={BLEND_MODES} /></Row>
-      <Row label="Start time (s)" help={FIELD_HELP["src.startTime"]}><NumField value={src.startTime} step={0.1} onChange={(v) => set("startTime", v)} /></Row>
-      <Row label="End time (s)" help={FIELD_HELP["src.endTime"]}><NumField value={src.endTime} step={0.1} onChange={(v) => set("endTime", v)} /></Row>
-      <Row label="Playback rate" help={FIELD_HELP["src.playbackRate"]} impact={ip("playbackRate", { kind: "scalar" }, src.playbackRate)}><NumField value={src.playbackRate} step={0.1} onChange={(v) => set("playbackRate", v)} /></Row>
-      <Row label="Chroma key" help={FIELD_HELP["src.chromaKey"]}><TextField value={src.chromaKey} onChange={(v) => set("chromaKey", v)} /></Row>
-      <Row label="Chroma thr." help={FIELD_HELP["src.chromaKeyThreshold"]}><NumField value={src.chromaKeyThreshold} onChange={(v) => set("chromaKeyThreshold", v)} /></Row>
-      <Row label="Shadow" help={FIELD_HELP["src.shadow"]}><TextField value={src.shadow} onChange={(v) => set("shadow", v)} placeholder="0 0 20px rgba(0,0,0,0.5)" /></Row>
-      <Row label="Crop top" help={FIELD_HELP["src.cropTop"]}><NumField value={src.cropTop} onChange={(v) => set("cropTop", v)} /></Row>
-      <Row label="Crop bottom" help={FIELD_HELP["src.cropBottom"]}><NumField value={src.cropBottom} onChange={(v) => set("cropBottom", v)} /></Row>
-      <Row label="Crop left" help={FIELD_HELP["src.cropLeft"]}><NumField value={src.cropLeft} onChange={(v) => set("cropLeft", v)} /></Row>
-      <Row label="Crop right" help={FIELD_HELP["src.cropRight"]}><NumField value={src.cropRight} onChange={(v) => set("cropRight", v)} /></Row>
-    </div>
-  );
-});
-
-// ── Transition editor ──────────────────────────────────
-const TransitionEditor = memo(function TransitionEditor({ t, slide, transitionDuration, onChange }: { t: SlideTransition; slide: VideoItem; transitionDuration: number; onChange: (t: SlideTransition) => void }) {
-  return (
-    <div>
-      <Row label="Type" help={FIELD_HELP["transition.type"]}><SelectField value={t.type} onChange={(v) => onChange({ ...t, type: v })} options={TRANSITION_TYPES} /></Row>
-      <Row label="Duration (s)" help={FIELD_HELP["transition.duration"]}
-        impact={{ slide, path: "transition.duration", variant: { kind: "scalar" }, current: t.duration, transitionDuration }}>
-        <NumField value={t.duration} step={0.1} onChange={(v) => onChange({ ...t, duration: v })} />
-      </Row>
-      <Row label="Easing" help={FIELD_HELP["transition.easing"]}><SelectField value={t.easing} onChange={(v) => onChange({ ...t, easing: v })} options={EASINGS} /></Row>
-    </div>
-  );
-});
+function moveIn<T>(arr: T[], i: number, d: -1 | 1): T[] {
+  const j = i + d;
+  if (j < 0 || j >= arr.length) return arr;
+  const next = [...arr];
+  [next[i], next[j]] = [next[j], next[i]];
+  return next;
+}
 
 // ── Slide editor ───────────────────────────────────────
-const SlideEditor = memo(function SlideEditor({ slide, transitionDuration, onChange }: { slide: VideoItem; transitionDuration: number; onChange: (s: VideoItem) => void }) {
-  const [tab, setTab] = useState<"background" | "video" | "sources" | "transition" | "behavior">("background");
-  const set = <K extends keyof VideoItem,>(k: K, v: VideoItem[K]) => onChange({ ...slide, [k]: v });
+type SlideTab = "effects" | "video" | "sources" | "transition" | "behavior";
+const SlideEditor = memo(function SlideEditor({ slide, transitionDuration, search, onChange, onSolo }: {
+  slide: VideoItem; transitionDuration: number; search: string; onChange: (s: VideoItem) => void; onSolo: (s: SoloLayer) => void;
+}) {
+  const [tab, setTab] = useState<SlideTab>("effects");
+  const patch = (k: string, v: unknown) => onChange({ ...slide, [k]: v } as VideoItem);
+  const setSources = (s: VideoSource[]) => onChange({ ...slide, sources: s });
+  const sources = slide.sources ?? [];
+  const layerCount = slide.background.effectLayers?.length ?? 0;
 
-  const setSources = (s: VideoSource[]) => set("sources", s);
-  const addSource = () => setSources([...slide.sources, emptySource()]);
-  const updSource = (i: number, s: VideoSource) => setSources(slide.sources.map((x, j) => j === i ? s : x));
-  const delSource = (i: number) => setSources(slide.sources.filter((_, j) => j !== i));
-  const dupSource = (i: number) => { const next = [...slide.sources]; next.splice(i + 1, 0, structuredClone(next[i])); setSources(next); };
-  const moveSource = (i: number, d: -1 | 1) => {
-    const next = [...slide.sources]; const j = i + d; if (j < 0 || j >= next.length) return;
-    [next[i], next[j]] = [next[j], next[i]]; setSources(next);
-  };
+  const tabs: { id: SlideTab; label: string }[] = [
+    { id: "effects", label: `Effects (${layerCount + 1})` },
+    { id: "video", label: "Main video" },
+    { id: "sources", label: `Extra videos (${sources.length})` },
+    { id: "transition", label: "Transition" },
+    { id: "behavior", label: "Auto-advance" },
+  ];
 
   return (
     <div>
-      <div className="flex gap-2 mb-4 border-b border-white/10">
-        {(["background","video","sources","transition","behavior"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-3 py-2 text-[11px] font-mono uppercase tracking-wider -mb-px transition ${tab===t ? "text-white border-b-2 border-white" : "text-white/40 hover:text-white/70 border-b-2 border-transparent"}`}>
-            {t}{t === "sources" && slide.sources.length > 0 ? ` (${slide.sources.length})` : ""}
+      <div className="flex flex-wrap gap-1 mb-5 border-b border-white/10">
+        {tabs.map((t) => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`px-3 py-2 text-[11px] font-mono uppercase tracking-wider -mb-px transition ${tab === t.id ? "text-white border-b-2 border-white" : "text-white/40 hover:text-white/70 border-b-2 border-transparent"}`}>
+            {t.label}
           </button>
         ))}
       </div>
-      {tab === "video" && (
-        <div>
-          <Row label="Video URL" help={FIELD_HELP["slide.src"]}><TextField value={slide.src} onChange={(v) => set("src", v)} placeholder="https://…/video.webm" /></Row>
-          <Row label="Label" help={FIELD_HELP["slide.label"]}><TextField value={slide.label ?? ""} onChange={(v) => set("label", v)} /></Row>
-          <Row label="Notes" help={FIELD_HELP["slide.notes"]}><TextField value={slide.notes ?? ""} onChange={(v) => set("notes", v)} /></Row>
-          <Row label="Loop" help={FIELD_HELP["slide.loop"]}><BoolField value={slide.loop} onChange={(v) => set("loop", v)} /></Row>
-          <Row label="Muted" help={FIELD_HELP["slide.muted"]}><BoolField value={slide.muted} onChange={(v) => set("muted", v)} /></Row>
-          <Row label="Volume" help={FIELD_HELP["slide.volume"]}><NumField value={slide.volume ?? 1} step={0.05} min={0} max={1} onChange={(v) => set("volume", v)} /></Row>
-        </div>
+
+      {tab === "effects" && (
+        <LayerStack bg={slide.background} slide={slide} transitionDuration={transitionDuration} search={search}
+          onChange={(b) => onChange({ ...slide, background: b })} onSolo={onSolo} />
       )}
+
+      {tab === "video" && (
+        <SchemaGroups groups={SLIDE_GROUPS} value={asRec(slide)} defaults={SLIDE_DEFAULTS} onPatch={patch}
+          slide={slide} transitionDuration={transitionDuration} search={search} />
+      )}
+
       {tab === "sources" && (
         <div>
           <p className="text-[10px] font-mono text-white/40 mb-3 leading-relaxed">
-            Layer additional videos on top of the main video. Each source has its own position, size, blend mode, and filters — full picture-in-picture.
+            Stack more videos on top of the main video. Each one has its own position, size, blend, crop and filters.
           </p>
-          {slide.sources.map((s, i) => (
-            <Card key={i} idx={i} title={s.src ? s.src.split("/").pop() ?? "source" : "(empty source)"}
-              onUp={() => moveSource(i, -1)} onDown={() => moveSource(i, 1)} onDup={() => dupSource(i)} onDel={() => delSource(i)}>
-              <VideoSourceEditor src={s} slide={slide} idx={i} transitionDuration={transitionDuration} onChange={(ns) => updSource(i, ns)} />
+          {sources.map((s, i) => (
+            <Card key={i} idx={i} title={s.src ? s.src.split("/").pop() ?? "video" : "(no URL yet)"}
+              onUp={() => setSources(moveIn(sources, i, -1))} onDown={() => setSources(moveIn(sources, i, 1))}
+              onDup={() => { const n = [...sources]; n.splice(i + 1, 0, structuredClone(s)); setSources(n); }}
+              onDel={() => setSources(sources.filter((_, j) => j !== i))}>
+              <SchemaGroups groups={SOURCE_GROUPS} value={asRec(s)} defaults={SOURCE_DEFAULTS}
+                onPatch={(k, v) => setSources(sources.map((x, j) => (j === i ? { ...x, [k]: v } : x)))}
+                slide={slide} pathPrefix={`sources.${i}.`} transitionDuration={transitionDuration} search={search} />
             </Card>
           ))}
-          <button className={btn} onClick={addSource}>+ Add video source</button>
+          <button className={btn} onClick={() => setSources([...sources, emptySource()])}>+ Add video</button>
         </div>
       )}
-      {tab === "transition" && slide.transition && (
-        <TransitionEditor t={slide.transition} slide={slide} transitionDuration={transitionDuration} onChange={(t) => set("transition", t)} />
+
+      {tab === "transition" && (
+        slide.transition ? (
+          <div>
+            <SchemaGroups groups={[{ title: "Transition", fields: TRANSITION_FIELDS }]} value={asRec(slide.transition)} defaults={TRANSITION_DEFAULTS}
+              onPatch={(k, v) => patch("transition", { ...slide.transition, [k]: v } as SlideTransition)}
+              slide={slide} pathPrefix="transition." transitionDuration={transitionDuration} search={search} />
+            <button className={btn} onClick={() => patch("transition", null)}>Use global transition</button>
+          </div>
+        ) : (
+          <div className="text-[11px] font-mono text-white/50 space-y-3">
+            <p>This slide uses the global transition.</p>
+            <button className={btn} onClick={() => patch("transition", structuredClone(CONFIG.defaults.defaultTransition))}>Customise for this slide</button>
+          </div>
+        )
       )}
-      {tab === "background" && (
-        <BackgroundEditor bg={slide.background} slide={slide} transitionDuration={transitionDuration} onChange={(b) => set("background", b)} />
-      )}
+
       {tab === "behavior" && (
-        <div>
-          <SectionLabel>Auto-advance</SectionLabel>
-          <p className="text-[10px] font-mono text-white/40 mb-3 leading-relaxed">
-            Per-slide override. Forces this slide to auto-advance even when the global setting is off — or pins on this slide when the global is on.
-          </p>
-          <Row label="Mode" help={FIELD_HELP["slide.autoAdvance"]}>
-            <SelectField value={slide.autoAdvance ?? "inherit"} onChange={(v) => set("autoAdvance", v)} options={ADVANCE_MODES} />
-          </Row>
-          <Row label="Delay (s)" help={FIELD_HELP["slide.autoAdvanceDelay"]}>
-            <NumField value={slide.autoAdvanceDelay ?? 0} step={0.5} min={0} onChange={(v) => set("autoAdvanceDelay", v)} />
-          </Row>
-        </div>
+        <SchemaGroups groups={[{ title: "Auto-advance (this slide only)", fields: SLIDE_BEHAVIOR_FIELDS }]}
+          value={{ ...asRec(slide), autoAdvance: slide.autoAdvance ?? "inherit", autoAdvanceDelay: slide.autoAdvanceDelay ?? 0 }}
+          onPatch={patch} search={search} />
       )}
     </div>
   );
 });
 
 // ── Global editor ──────────────────────────────────────
-const GlobalEditor = memo(function GlobalEditor({ cfg, onChange }: { cfg: EngineConfig; onChange: (c: EngineConfig) => void }) {
-  const [tab, setTab] = useState<"meta"|"video"|"controls"|"audio"|"theme"|"performance"|"watermark"|"accessibility"|"export"|"defaults"|"backgrounds">("meta");
-  const patch = <K extends keyof EngineConfig,>(k: K, v: Partial<EngineConfig[K]>) =>
-    onChange({ ...cfg, [k]: { ...(cfg[k] as object), ...v } as EngineConfig[K] });
-
+const GlobalEditor = memo(function GlobalEditor({ cfg, search, onChange, onSolo }: {
+  cfg: EngineConfig; search: string; onChange: (c: EngineConfig) => void; onSolo: (s: SoloLayer) => void;
+}) {
+  const [tab, setTab] = useState<string>("meta");
+  const patchSection = (path: keyof EngineConfig, k: string, v: unknown) =>
+    onChange({ ...cfg, [path]: { ...(cfg[path] as object), [k]: v } } as EngineConfig);
   const setBgs = (b: BackgroundConfig[]) => onChange({ ...cfg, backgrounds: b });
-  const addBg = () => setBgs([...(cfg.backgrounds ?? []), { type: EFFECT_KEYS[0], enabled: true, zIndex: 0, opacity: 1, blendMode: "source-over" }]);
-  const updBg = (i: number, b: BackgroundConfig) => setBgs(cfg.backgrounds.map((x, j) => j === i ? b : x));
-  const delBg = (i: number) => setBgs(cfg.backgrounds.filter((_, j) => j !== i));
+  const bgs = cfg.backgrounds ?? [];
+  const setDefaults = (k: keyof EngineConfig["defaults"], v: unknown) =>
+    onChange({ ...cfg, defaults: { ...cfg.defaults, [k]: v } });
+
+  const tabs = [...GLOBAL_SECTIONS.map((s) => ({ id: s.id, title: s.title })), { id: "overlays", title: "Overlays" }, { id: "defaults", title: "New-slide defaults" }];
+  const defaultSlide = useMemo(() => ({ ...emptySlide(), background: cfg.defaults.background }), [cfg.defaults.background]);
+  const section = GLOBAL_SECTIONS.find((s) => s.id === tab);
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 mb-4 border-b border-white/10">
-        {(["meta","video","controls","audio","theme","performance","watermark","backgrounds","accessibility","export","defaults"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-2.5 py-2 text-[10px] font-mono uppercase tracking-wider -mb-px transition ${tab===t ? "text-white border-b-2 border-white" : "text-white/40 hover:text-white/70 border-b-2 border-transparent"}`}>{t}</button>
+      <div className="flex flex-wrap gap-1 mb-5 border-b border-white/10">
+        {tabs.map((t) => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`px-2.5 py-2 text-[10px] font-mono uppercase tracking-wider -mb-px transition ${tab === t.id ? "text-white border-b-2 border-white" : "text-white/40 hover:text-white/70 border-b-2 border-transparent"}`}>{t.title}</button>
         ))}
       </div>
-      {tab === "meta" && (
-        <div>
-          <Row label="Title"><TextField value={cfg.meta.title} onChange={(v) => patch("meta", { title: v })} /></Row>
-          <Row label="Version"><TextField value={cfg.meta.version} onChange={(v) => patch("meta", { version: v })} /></Row>
-          <Row label="Author"><TextField value={cfg.meta.author} onChange={(v) => patch("meta", { author: v })} /></Row>
-          <Row label="Description"><TextField value={cfg.meta.description} onChange={(v) => patch("meta", { description: v })} /></Row>
-          <Row label="License"><TextField value={cfg.meta.license} onChange={(v) => patch("meta", { license: v })} /></Row>
-          <Row label="Language"><TextField value={cfg.meta.language} onChange={(v) => patch("meta", { language: v })} /></Row>
-          <Row label="Category"><TextField value={cfg.meta.category} onChange={(v) => patch("meta", { category: v })} /></Row>
-          <Row label="Project URL"><TextField value={cfg.meta.projectUrl} onChange={(v) => patch("meta", { projectUrl: v })} /></Row>
-          <Row label="Cover image"><TextField value={cfg.meta.coverImage} onChange={(v) => patch("meta", { coverImage: v })} /></Row>
-          <Row label="Thumbnail"><TextField value={cfg.meta.thumbnail} onChange={(v) => patch("meta", { thumbnail: v })} /></Row>
-        </div>
+
+      {section && (
+        <SchemaGroups groups={section.groups} value={asRec(cfg[section.path])} defaults={asRec(CONFIG[section.path])}
+          onPatch={(k, v) => patchSection(section.path, k, v)} search={search} />
       )}
-      {tab === "video" && (
-        <div>
-          <Row label="Fit"><SelectField value={cfg.video.fit} onChange={(v) => patch("video", { fit: v })} options={["contain","cover"] as const} /></Row>
-          <Row label="Controls"><BoolField value={cfg.video.controls} onChange={(v) => patch("video", { controls: v })} /></Row>
-          <Row label="BG color"><TextField value={cfg.video.bgColor} onChange={(v) => patch("video", { bgColor: v })} /></Row>
-          <Row label="Global volume"><NumField value={cfg.video.globalVolume} step={0.05} min={0} max={1} onChange={(v) => patch("video", { globalVolume: v })} /></Row>
-          <Row label="Preload"><SelectField value={cfg.video.preloadStrategy} onChange={(v) => patch("video", { preloadStrategy: v })} options={["none","next","all"] as const} /></Row>
-          <Row label="Buffer size"><NumField value={cfg.video.bufferSize} onChange={(v) => patch("video", { bufferSize: v })} /></Row>
-        </div>
-      )}
-      {tab === "controls" && (
-        <div>
-          {Object.entries(cfg.controls).map(([k, v]) => (
-            <Row key={k} label={k}>
-              {typeof v === "boolean"
-                ? <BoolField value={v} onChange={(nv) => patch("controls", { [k]: nv } as Partial<EngineConfig["controls"]>)} />
-                : typeof v === "number"
-                ? <NumField value={v} step={k.toLowerCase().includes("duration") || k.toLowerCase().includes("timeout") ? 0.1 : 1}
-                    onChange={(nv) => patch("controls", { [k]: nv } as Partial<EngineConfig["controls"]>)} />
-                : <TextField value={String(v)} onChange={(nv) => patch("controls", { [k]: nv } as Partial<EngineConfig["controls"]>)} />}
-            </Row>
-          ))}
-        </div>
-      )}
-      {tab === "audio" && (
-        <div>
-          <Row label="Enabled"><BoolField value={cfg.audio.enabled} onChange={(v) => patch("audio", { enabled: v })} /></Row>
-          <Row label="Volume"><NumField value={cfg.audio.volume} step={0.05} min={0} max={1} onChange={(v) => patch("audio", { volume: v })} /></Row>
-          <Row label="Fade in"><BoolField value={cfg.audio.fadeIn} onChange={(v) => patch("audio", { fadeIn: v })} /></Row>
-          <Row label="Fade in ms"><NumField value={cfg.audio.fadeInDuration} onChange={(v) => patch("audio", { fadeInDuration: v })} /></Row>
-          <Row label="Fade out"><BoolField value={cfg.audio.fadeOut} onChange={(v) => patch("audio", { fadeOut: v })} /></Row>
-          <Row label="Fade out ms"><NumField value={cfg.audio.fadeOutDuration} onChange={(v) => patch("audio", { fadeOutDuration: v })} /></Row>
-          <Row label="Crossfade"><BoolField value={cfg.audio.crossfade} onChange={(v) => patch("audio", { crossfade: v })} /></Row>
-          <Row label="Crossfade ms"><NumField value={cfg.audio.crossfadeDuration} onChange={(v) => patch("audio", { crossfadeDuration: v })} /></Row>
-          <Row label="Global mute"><BoolField value={cfg.audio.globalMute} onChange={(v) => patch("audio", { globalMute: v })} /></Row>
-        </div>
-      )}
-      {tab === "theme" && (
-        <div>
-          <Row label="Primary"><TextField value={cfg.theme.primaryColor} onChange={(v) => patch("theme", { primaryColor: v })} /></Row>
-          <Row label="Secondary"><TextField value={cfg.theme.secondaryColor} onChange={(v) => patch("theme", { secondaryColor: v })} /></Row>
-          <Row label="Accent"><TextField value={cfg.theme.accentColor} onChange={(v) => patch("theme", { accentColor: v })} /></Row>
-          <Row label="Font family"><TextField value={cfg.theme.fontFamily} onChange={(v) => patch("theme", { fontFamily: v })} /></Row>
-          <Row label="UI opacity"><NumField value={cfg.theme.uiOpacity} step={0.05} min={0} max={1} onChange={(v) => patch("theme", { uiOpacity: v })} /></Row>
-          <Row label="UI position"><SelectField value={cfg.theme.uiPosition} onChange={(v) => patch("theme", { uiPosition: v })} options={["top-right","top-left","bottom-right","bottom-left"] as const} /></Row>
-          <Row label="Dark mode"><BoolField value={cfg.theme.darkMode} onChange={(v) => patch("theme", { darkMode: v })} /></Row>
-        </div>
-      )}
-      {tab === "performance" && (
-        <div>
-          <Row label="Max FPS"><NumField value={cfg.performance.maxFPS} onChange={(v) => patch("performance", { maxFPS: v })} /></Row>
-          <Row label="Resolution"><NumField value={cfg.performance.resolution} step={0.1} onChange={(v) => patch("performance", { resolution: v })} /></Row>
-          <Row label="Enable GPU"><BoolField value={cfg.performance.enableGPU} onChange={(v) => patch("performance", { enableGPU: v })} /></Row>
-          <Row label="Max particles"><NumField value={cfg.performance.maxParticles} onChange={(v) => patch("performance", { maxParticles: v })} /></Row>
-          <Row label="Bloom"><BoolField value={cfg.performance.enableBloom} onChange={(v) => patch("performance", { enableBloom: v })} /></Row>
-          <Row label="Antialias"><BoolField value={cfg.performance.antialiasing} onChange={(v) => patch("performance", { antialiasing: v })} /></Row>
-        </div>
-      )}
-      {tab === "watermark" && (
-        <div>
-          <Row label="Enabled"><BoolField value={cfg.watermark.enabled} onChange={(v) => patch("watermark", { enabled: v })} /></Row>
-          <Row label="Mode"><SelectField value={cfg.watermark.mode} onChange={(v) => patch("watermark", { mode: v })} options={["text","image"] as const} /></Row>
-          <Row label="Text"><TextField value={cfg.watermark.text} onChange={(v) => patch("watermark", { text: v })} /></Row>
-          <Row label="Image URL"><TextField value={cfg.watermark.imageUrl} onChange={(v) => patch("watermark", { imageUrl: v })} /></Row>
-          <Row label="Image width"><NumField value={cfg.watermark.imageWidth} onChange={(v) => patch("watermark", { imageWidth: v })} /></Row>
-          <Row label="Image height"><NumField value={cfg.watermark.imageHeight} onChange={(v) => patch("watermark", { imageHeight: v })} /></Row>
-          <Row label="Position"><SelectField value={cfg.watermark.position} onChange={(v) => patch("watermark", { position: v })} options={["top-left","top-right","bottom-left","bottom-right","center","custom"] as const} /></Row>
-          <Row label="X"><NumField value={cfg.watermark.x} onChange={(v) => patch("watermark", { x: v })} /></Row>
-          <Row label="Y"><NumField value={cfg.watermark.y} onChange={(v) => patch("watermark", { y: v })} /></Row>
-          <Row label="Opacity"><NumField value={cfg.watermark.opacity} step={0.05} min={0} max={1} onChange={(v) => patch("watermark", { opacity: v })} /></Row>
-          <Row label="Font size"><NumField value={cfg.watermark.fontSize} onChange={(v) => patch("watermark", { fontSize: v })} /></Row>
-          <Row label="Color"><TextField value={cfg.watermark.color} onChange={(v) => patch("watermark", { color: v })} /></Row>
-          <Row label="Rotation"><NumField value={cfg.watermark.rotation} onChange={(v) => patch("watermark", { rotation: v })} /></Row>
-        </div>
-      )}
-      {tab === "backgrounds" && (
+
+      {tab === "overlays" && (
         <div>
           <p className="text-[10px] font-mono text-white/40 mb-3 leading-relaxed">
-            Global overlay effects rendered above or below every slide. Use for persistent visual treatments like grain, vignette, or ambient particles.
+            Effects drawn on every slide, above or below the slide's own effects.
           </p>
-          {(cfg.backgrounds ?? []).map((b, i) => (
-            <Card key={i} idx={i} title={`${EFFECT_NAMES[b.type] ?? b.type} · z${b.zIndex}`}
-              onUp={() => { const next = [...cfg.backgrounds]; if (i > 0) { [next[i], next[i-1]] = [next[i-1], next[i]]; setBgs(next); } }}
-              onDown={() => { const next = [...cfg.backgrounds]; if (i < next.length - 1) { [next[i], next[i+1]] = [next[i+1], next[i]]; setBgs(next); } }}
-              onDup={() => { const next = [...cfg.backgrounds]; next.splice(i+1, 0, structuredClone(b)); setBgs(next); }}
-              onDel={() => delBg(i)}>
-              <Row label="Effect" help={FIELD_HELP["bgGlobal.type"]}><SelectField value={b.type} onChange={(v) => updBg(i, { ...b, type: v })} options={EFFECT_KEYS as readonly string[]} /></Row>
-              <Row label="Enabled" help={FIELD_HELP["bgGlobal.enabled"]}><BoolField value={b.enabled} onChange={(v) => updBg(i, { ...b, enabled: v })} /></Row>
-              <Row label="Z-index" help={FIELD_HELP["bgGlobal.zIndex"]}><NumField value={b.zIndex} onChange={(v) => updBg(i, { ...b, zIndex: v })} /></Row>
-              <Row label="Opacity" help={FIELD_HELP["bgGlobal.opacity"]}><NumField value={b.opacity} step={0.05} min={0} max={1} onChange={(v) => updBg(i, { ...b, opacity: v })} /></Row>
-              <Row label="Blend" help={FIELD_HELP["bgGlobal.blendMode"]}><SelectField value={b.blendMode} onChange={(v) => updBg(i, { ...b, blendMode: v })} options={BLEND_MODES} /></Row>
+          {bgs.map((b, i) => (
+            <Card key={i} idx={i} title={`${EFFECT_NAMES[b.type] ?? b.type} · z${b.zIndex}${b.enabled ? "" : " · off"}`}
+              onUp={() => setBgs(moveIn(bgs, i, -1))} onDown={() => setBgs(moveIn(bgs, i, 1))}
+              onDup={() => { const n = [...bgs]; n.splice(i + 1, 0, structuredClone(b)); setBgs(n); }}
+              onDel={() => setBgs(bgs.filter((_, j) => j !== i))}>
+              <SchemaGroups groups={[{ title: "Overlay", fields: GLOBAL_BG_FIELDS }]} value={asRec(b)}
+                onPatch={(k, v) => setBgs(bgs.map((x, j) => (j === i ? { ...x, [k]: v } : x)))} search={search} />
             </Card>
           ))}
-          <button className={btn} onClick={addBg}>+ Add global background</button>
+          <button className={btn} onClick={() => setBgs([...bgs, { type: EFFECT_KEYS[0], enabled: true, zIndex: 0, opacity: 1, blendMode: "source-over" }])}>+ Add overlay</button>
         </div>
       )}
-      {tab === "accessibility" && (
-        <div>
-          {Object.entries(cfg.accessibility).map(([k, v]) => (
-            <Row key={k} label={k}>
-              <BoolField value={v as boolean} onChange={(nv) => patch("accessibility", { [k]: nv } as Partial<EngineConfig["accessibility"]>)} />
-            </Row>
-          ))}
-        </div>
-      )}
-      {tab === "export" && (
-        <div>
-          <Row label="Format"><SelectField value={cfg.export.format} onChange={(v) => patch("export", { format: v })} options={["json","ts"] as const} /></Row>
-          <Row label="Include assets"><BoolField value={cfg.export.includeAssets} onChange={(v) => patch("export", { includeAssets: v })} /></Row>
-          <Row label="Minify"><BoolField value={cfg.export.minify} onChange={(v) => patch("export", { minify: v })} /></Row>
-          <Row label="Embed videos"><BoolField value={cfg.export.embedVideos} onChange={(v) => patch("export", { embedVideos: v })} /></Row>
-        </div>
-      )}
+
       {tab === "defaults" && (
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div>
-            <p className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Default background applied to new slides</p>
-            <BackgroundEditor bg={cfg.defaults.background} slide={{ ...emptySlide(), background: cfg.defaults.background }} transitionDuration={0.5}
-              onChange={(b) => onChange({ ...cfg, defaults: { ...cfg.defaults, background: b } })} />
+            <p className="text-[10px] font-mono text-white/50 uppercase tracking-wider mb-3">Default effects for new slides</p>
+            <LayerStack bg={cfg.defaults.background} slide={defaultSlide} transitionDuration={0.5} search={search} withImpact={false}
+              onChange={(b) => setDefaults("background", b)} onSolo={onSolo} />
           </div>
-          <div>
-            <p className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Default effect layer</p>
-            <EffectLayerEditor
-              layer={cfg.defaults.effectLayer}
-              slide={{ ...emptySlide(), background: { ...cfg.defaults.background, effectLayers: [cfg.defaults.effectLayer] } }}
-              layerIndex={0}
-              transitionDuration={0.5}
-              onChange={(l) => onChange({ ...cfg, defaults: { ...cfg.defaults, effectLayer: l } })}
-            />
-          </div>
-          <div>
-            <p className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Default video source</p>
-            <VideoSourceEditor
-              src={cfg.defaults.videoSource}
-              slide={{ ...emptySlide(), sources: [cfg.defaults.videoSource] }}
-              idx={0}
-              transitionDuration={0.5}
-              onChange={(s) => onChange({ ...cfg, defaults: { ...cfg.defaults, videoSource: s } })}
-            />
-          </div>
-          <div>
-            <p className="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-2">Default transition</p>
-            <TransitionEditor
-              t={cfg.defaults.defaultTransition}
-              slide={{ ...emptySlide(), transition: cfg.defaults.defaultTransition }}
-              transitionDuration={0.5}
-              onChange={(t) => onChange({ ...cfg, defaults: { ...cfg.defaults, defaultTransition: t } })}
-            />
-          </div>
+          <SchemaGroups groups={LAYER_GROUPS.map((g) => ({ ...g, title: `New layer · ${g.title}` }))} value={asRec(cfg.defaults.effectLayer)}
+            defaults={asRec(CONFIG.defaults.effectLayer)} onPatch={(k, v) => setDefaults("effectLayer", { ...cfg.defaults.effectLayer, [k]: v })} search={search} />
+          <SchemaGroups groups={SOURCE_GROUPS.map((g) => ({ ...g, title: `New video · ${g.title}` }))} value={asRec(cfg.defaults.videoSource)}
+            defaults={SOURCE_DEFAULTS} onPatch={(k, v) => setDefaults("videoSource", { ...cfg.defaults.videoSource, [k]: v })} search={search} />
+          <SchemaGroups groups={[{ title: "Global transition", fields: TRANSITION_FIELDS }]} value={asRec(cfg.defaults.defaultTransition)}
+            defaults={TRANSITION_DEFAULTS} onPatch={(k, v) => setDefaults("defaultTransition", { ...cfg.defaults.defaultTransition, [k]: v })} search={search} />
         </div>
       )}
     </div>
@@ -584,7 +210,7 @@ const GlobalEditor = memo(function GlobalEditor({ cfg, onChange }: { cfg: Engine
 });
 
 // ── Live preview tile (hover-intent zoom + impact bus A/B) ──
-const LivePreview = ({ slide, transitionDuration }: { slide: VideoItem | null; transitionDuration: number }) => {
+const LivePreview = ({ slide, transitionDuration, solo = null }: { slide: VideoItem | null; transitionDuration: number; solo?: SoloLayer }) => {
   const [hover, setHover] = useState(false);
   const [impact, setImpact] = useState<ImpactState | null>(impactBus.get());
   const closeTimer = useRef<number>(0);
@@ -619,11 +245,13 @@ const LivePreview = ({ slide, transitionDuration }: { slide: VideoItem | null; t
         aspect={zoomed ? "16/9" : "16/9"}
       />
     ) : (
-      <MiniStage slide={slide} transitionDuration={transitionDuration} active className="w-full h-full" />
+      <MiniStage slide={slide} transitionDuration={transitionDuration} soloLayer={solo} active className="w-full h-full" />
     );
 
   const badge = impact
     ? `Impact · ${impact.label}`
+    : solo !== null
+    ? `Solo · ${solo === "base" ? "base effect" : `layer ${solo + 1}`}`
     : `Preview · ${EFFECT_NAMES[slide.background.type] ?? slide.background.type}`;
 
   const tile = (
@@ -678,12 +306,75 @@ const LivePreview = ({ slide, transitionDuration }: { slide: VideoItem | null; t
 // ── Main Builder page ──────────────────────────────────
 const Builder = () => {
   const navigate = useNavigate();
-  const [cfg, setCfg] = useState<EngineConfig>(() => {
-    const blank = emptyConfig();
-    blank.video.playlist = [];
-    return blank;
+  // Start ready to edit: restore the autosaved draft, else the live config.
+  const [cfg, setCfgRaw] = useState<EngineConfig>(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) return normalizeConfig(JSON.parse(raw));
+    } catch { /* ignore corrupt draft */ }
+    return normalizeConfig(CONFIG);
   });
-  const [selected, setSelected] = useState<number>(-1);
+  const [selected, setSelected] = useState<number>(0);
+  const [search, setSearch] = useState("");
+  const [solo, setSolo] = useState<SoloLayer>(null);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  // Undo / redo history (bounded, coalesced per 400ms burst of edits).
+  const past = useRef<EngineConfig[]>([]);
+  const future = useRef<EngineConfig[]>([]);
+  const lastPush = useRef(0);
+  const [, force] = useState(0);
+  const setCfg = useCallback((next: EngineConfig | ((c: EngineConfig) => EngineConfig)) => {
+    setCfgRaw((prev) => {
+      const value = typeof next === "function" ? (next as (c: EngineConfig) => EngineConfig)(prev) : next;
+      if (value === prev) return prev;
+      const now = Date.now();
+      if (now - lastPush.current > 400) {
+        past.current = [...past.current.slice(-79), prev];
+        future.current = [];
+      }
+      lastPush.current = now;
+      return value;
+    });
+    force((n) => n + 1);
+  }, []);
+  const undo = useCallback(() => {
+    const prev = past.current.pop();
+    if (!prev) return;
+    setCfgRaw((c) => { future.current.push(c); return prev; });
+    lastPush.current = 0;
+    force((n) => n + 1);
+  }, []);
+  const redo = useCallback(() => {
+    const next = future.current.pop();
+    if (!next) return;
+    setCfgRaw((c) => { past.current.push(c); return next; });
+    lastPush.current = 0;
+    force((n) => n + 1);
+  }, []);
+
+  // Autosave draft (debounced).
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(cfg)); setSavedAt(Date.now()); } catch { /* quota */ }
+    }, 600);
+    return () => window.clearTimeout(t);
+  }, [cfg]);
+
+  // Keyboard: ⌘/Ctrl+Z undo, ⌘/Ctrl+Shift+Z or ⌘/Ctrl+Y redo, ⌘/Ctrl+F search.
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const k = e.key.toLowerCase();
+      const typing = (e.target as HTMLElement)?.tagName === "INPUT" || (e.target as HTMLElement)?.tagName === "TEXTAREA";
+      if (k === "z" && !typing) { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
+      else if (k === "y" && !typing) { e.preventDefault(); redo(); }
+      else if (k === "f") { e.preventDefault(); searchRef.current?.focus(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
   const [view, setView] = useState<"slide" | "global">("slide");
   const [previewOn, setPreviewOn] = useState(true);
   const importRef = useRef<HTMLInputElement>(null);
@@ -765,9 +456,9 @@ const Builder = () => {
   }, []);
 
   const importFromCurrent = useCallback(() => {
-    setCfg(structuredClone(CONFIG));
+    setCfg(normalizeConfig(CONFIG));
     setSelected(0);
-  }, []);
+  }, [setCfg]);
 
   const loadJSON = () => importRef.current?.click();
   const onImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -778,7 +469,7 @@ const Builder = () => {
       try {
         const data = JSON.parse(reader.result as string);
         if (data?.meta && data?.video) {
-          setCfg({ ...emptyConfig(), ...data, video: { ...emptyConfig().video, ...data.video, playlist: data.video.playlist ?? [] } });
+          setCfg(normalizeConfig(data));
           setSelected(0);
         }
       } catch { /* ignore */ }
@@ -788,9 +479,7 @@ const Builder = () => {
   };
 
   const saveJSON = (asTS = false) => {
-    const data = asTS
-      ? `/* Generated ${new Date().toISOString()} */\nexport const CONFIG = ${JSON.stringify(cfg, null, 2)};\n`
-      : JSON.stringify(cfg, null, 2);
+    const data = serializeConfig(cfg, asTS);
     const blob = new Blob([data], { type: asTS ? "text/typescript" : "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -801,7 +490,7 @@ const Builder = () => {
   };
 
   const applyToLive = () => {
-    builderStore.set(structuredClone(cfg));
+    builderStore.set(normalizeConfig(cfg));
     navigate("/");
   };
 
@@ -810,7 +499,7 @@ const Builder = () => {
   const transitionDuration = (cfg.controls.transitionDuration ?? 0) / 1000;
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-zinc-950 text-white">
+    <div className="fixed inset-0 flex flex-col text-white">
       <BuilderAmbient />
       {/* Top bar */}
       <div className="relative z-10 flex items-center gap-2 px-4 py-2.5 border-b border-white/10 bg-zinc-950/85 backdrop-blur">
@@ -819,7 +508,13 @@ const Builder = () => {
         <span className="text-[11px] font-mono uppercase tracking-widest text-white/30 ml-2">Config Builder</span>
         <span className="text-[10px] font-mono text-white/40 ml-3">{summary}</span>
         <div className="flex-1" />
-        <button className={btn} onClick={() => { setCfg({ ...emptyConfig(), video: { ...emptyConfig().video, playlist: [] } }); setSelected(-1); }}>New</button>
+        <button className={btn} onClick={undo} disabled={past.current.length === 0} title="Undo (⌘Z)">↶</button>
+        <button className={btn} onClick={redo} disabled={future.current.length === 0} title="Redo (⇧⌘Z)">↷</button>
+        <input ref={searchRef} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search options… (⌘F)"
+          className="h-7 w-48 bg-white/[0.04] border border-white/10 rounded px-2.5 text-[11px] font-mono text-white/90 placeholder:text-white/30 outline-none focus:border-white/40" />
+        <span className="text-[10px] font-mono text-white/30 w-20">{savedAt ? "draft saved" : ""}</span>
+        <Divider />
+        <button className={btn} onClick={() => { const c = normalizeConfig(CONFIG); c.video.playlist = []; setCfg(c); setSelected(-1); }}>New</button>
         <button className={btn} onClick={importFromCurrent}>Load current</button>
         <Divider />
         <button className={btn} onClick={loadJSON}>Import JSON</button>
@@ -880,7 +575,7 @@ const Builder = () => {
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-3xl mx-auto px-6 py-6 pb-32">
               {view === "slide" && current && (
-                <SlideEditor slide={current} transitionDuration={transitionDuration} onChange={(s) => updateSlide(selected, s)} />
+                <SlideEditor slide={current} transitionDuration={transitionDuration} search={search} onSolo={setSolo} onChange={(s) => updateSlide(selected, s)} />
               )}
               {view === "slide" && !current && (
                 <div className="text-[12px] font-mono text-white/40 mt-20 text-center leading-relaxed">
@@ -888,7 +583,7 @@ const Builder = () => {
                   <span className="text-white/30">add one with the buttons above.</span>
                 </div>
               )}
-              {view === "global" && <GlobalEditor cfg={cfg} onChange={setCfg} />}
+              {view === "global" && <GlobalEditor cfg={cfg} search={search} onSolo={setSolo} onChange={setCfg} />}
             </div>
           </div>
           {/* Sticky footer summary */}
@@ -901,7 +596,7 @@ const Builder = () => {
       </div>
 
       {previewOn && current && (
-        <LivePreview slide={current} transitionDuration={transitionDuration} />
+        <LivePreview slide={current} transitionDuration={transitionDuration} solo={solo} />
       )}
     </div>
   );

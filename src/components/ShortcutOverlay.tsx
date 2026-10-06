@@ -14,6 +14,15 @@ const shortcuts = [
     { key: "Space", desc: "Play / Pause" },
     { key: "F", desc: "Toggle fullscreen" },
   ]},
+  { category: "Presentation remotes (clickers, KDE Connect, media keys)", items: [
+    { key: "PgDn / PgUp", desc: "Next / Previous slide" },
+    { key: "N / P · Enter", desc: "Next / Previous slide" },
+    { key: "Home / End", desc: "First / Last slide" },
+    { key: "B / . / W", desc: "Blank screen" },
+    { key: "F5", desc: "Enter fullscreen" },
+    { key: "Media ⏮ ⏯ ⏭", desc: "Prev / Play-Pause / Next" },
+    { key: "Gamepad D-pad", desc: "Prev / Next slide" },
+  ]},
   { category: "Tools", items: [
     { key: "/builder", desc: "Open Config Builder" },
   ]},

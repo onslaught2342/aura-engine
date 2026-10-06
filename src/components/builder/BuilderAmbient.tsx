@@ -1,51 +1,31 @@
-import { memo, useMemo } from "react";
-import { BackgroundCanvas } from "@/components/BackgroundCanvas";
-import type { SlideBackground } from "@/engine/config";
+import { memo } from "react";
 
 /**
- * Calm ambient MatrixRain background rendered behind the entire Builder UI.
- * Fixed, low opacity, no interaction. Never changes regardless of the slide
- * being edited — so intense per-slide effects stay corralled inside the
- * docked LivePreview and can't flashbang the editor surface.
+ * Static, non-animated workspace backdrop for the Builder.
+ *
+ * Deliberately calm and identical on every tab and every slide: a near-black
+ * base, a faint dot grid and a soft vignette. Nothing here reflects the slide
+ * being edited — all effects live inside the preview panel so an intense
+ * configuration can never flashbang the editing surface.
  */
 export const BuilderAmbient = memo(function BuilderAmbient() {
-  const bg = useMemo<SlideBackground>(() => ({
-    type: "MatrixRain",
-    color: "150, 60%, 45%",
-    opacity: 1,
-    blendMode: "source-over",
-    saturation: 60,
-    brightness: 70,
-    speed: 0.5,
-    intensity: 25,
-    scale: 1,
-    turbulence: 20,
-    direction: 180,
-    secondaryEffect: null,
-    secondaryOpacity: 0,
-    secondaryColor: "",
-    effectLayers: [],
-    backgroundGradient: "radial-gradient(ellipse at center, #0a0f0d 0%, #05070a 70%)",
-    vignetteStrength: 0.55,
-    vignetteColor: "0, 0, 0",
-    colorFilter: "",
-    transitionType: "fade",
-    chromaKey: "",
-    chromaKeyThreshold: 0,
-    motionBlur: 0,
-    pixelate: 0,
-    scanlines: false,
-    scanlineIntensity: 0,
-    filmGrain: 0,
-  }), []);
-
   return (
-    <div
-      aria-hidden
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 0, opacity: 0.18 }}
-    >
-      <BackgroundCanvas background={bg} transitionDuration={0} />
+    <div aria-hidden className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+      <div className="absolute inset-0" style={{ background: "#08090b" }} />
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: "radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+          opacity: 0.5,
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.05) 0%, transparent 55%), radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.75) 100%)",
+        }}
+      />
     </div>
   );
 });

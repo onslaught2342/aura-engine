@@ -252,6 +252,7 @@ export interface EngineConfig {
     randomTransitions: boolean;
     builderEnabled: boolean;
     previewPageEnabled: boolean;
+    remoteEnabled: boolean;
   };
   audio: AudioConfig;
   theme: ThemeConfig;
@@ -2147,7 +2148,8 @@ export const CONFIG: EngineConfig = {
     doubleTapAction: "none",
     randomTransitions: false,
     builderEnabled: true,
-    previewPageEnabled: true
+    previewPageEnabled: true,
+    remoteEnabled: true
   },
 
   /* ── Audio ── */

@@ -12,6 +12,8 @@ import { EFFECT_NAMES } from "@/engine/effectNames";
 import { sanitizeBackground } from "@/lib/cssSanitize";
 import { prewarmThumbs } from "@/lib/videoThumbCache";
 import { builderStore } from "@/lib/builderStore";
+import { usePresentationRemotes } from "@/hooks/usePresentationRemotes";
+import { PresenterLink } from "@/components/remote/PresenterLink";
 
 const Index = () => {
   const [engineConfig, setEngineConfig] = useState<EngineConfig>(() => {
@@ -26,6 +28,10 @@ const Index = () => {
   const idleTimer = useRef<number>(0);
   const [stripVisible, setStripVisible] = useState(false);
   const [shortcutsVisible, setShortcutsVisible] = useState(false);
+  const [blank, setBlank] = useState(false);
+
+  // Presentation clickers / projector & software remotes — main page only
+  usePresentationRemotes({ enabled: engineConfig.controls.keyboardShortcutsEnabled !== false, current: currentSlide, count: playlist.length, onBlankToggle: () => setBlank(b => !b) });
 
   // Track fullscreen state
   useEffect(() => {
@@ -290,6 +296,22 @@ const Index = () => {
           visible={stripVisible}
           onJump={handleJump}
           effectNames={EFFECT_NAMES}
+        />
+      )}
+
+      {/* Blank-screen (remote controlled) */}
+      {blank && <div className="fixed inset-0" style={{ zIndex: 30, background: "#000" }} />}
+
+      {/* Phone / tablet remote pairing */}
+      {engineConfig.controls.remoteEnabled !== false && (
+        <PresenterLink
+          config={engineConfig}
+          playlist={playlist}
+          currentSlide={currentSlide}
+          onConfigChange={setEngineConfig}
+          onPlaylistChange={setPlaylist}
+          blank={blank}
+          onBlankChange={setBlank}
         />
       )}
 

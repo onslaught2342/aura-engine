@@ -270,6 +270,35 @@ export const VideoPlayer = ({ config, playlist, onIndexChange }: Props) => {
     return () => window.removeEventListener("slide:jump", onJump as EventListener);
   }, [load, playlist.length]);
 
+  // External playback command (from the phone remote)
+  useEffect(() => {
+    const setPlayback = (action: "play" | "pause" | "toggle") => {
+      const video = videoRef.current;
+      const shouldPause = action === "pause" || (action === "toggle" && !!video && !video.paused);
+      if (shouldPause) {
+        video?.pause();
+        multiVideoRefs.current.forEach((v) => v.pause());
+        setPaused(true);
+      } else {
+        video?.play().catch(() => {});
+        multiVideoRefs.current.forEach((v) => v.play().catch(() => {}));
+        setPaused(false);
+      }
+    };
+    const onPlayback = (e: Event) => {
+      const detail = (e as CustomEvent<{ action: "play" | "pause" | "toggle" }>).detail;
+      if (detail?.action) setPlayback(detail.action);
+    };
+    window.addEventListener("slide:playback", onPlayback as EventListener);
+    return () => window.removeEventListener("slide:playback", onPlayback as EventListener);
+  }, []);
+
+  // Broadcast playback state so the remote panel stays in sync
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("slide:playstate", { detail: { paused } }));
+  }, [paused]);
+
+
   // Keyboard navigation (extended with Space and ?)
   useEffect(() => {
     if (!config.controls.keyboardShortcutsEnabled) return;
