@@ -13,6 +13,7 @@ import { impactBus, type ImpactState } from "@/lib/impactBus";
 import {
   GLOBAL_SECTIONS, SLIDE_GROUPS, SLIDE_BEHAVIOR_FIELDS, SOURCE_GROUPS, TRANSITION_FIELDS, GLOBAL_BG_FIELDS, LAYER_GROUPS,
 } from "@/lib/configSchema";
+import { SpeakerTab } from "@/components/builder/SpeakerTab";
 import { normalizeConfig, normalizeSlide, serializeConfig } from "@/lib/configNormalize";
 
 const DRAFT_KEY = "aura.builder.draft.v2";
@@ -59,7 +60,7 @@ function moveIn<T>(arr: T[], i: number, d: -1 | 1): T[] {
 }
 
 // ── Slide editor ───────────────────────────────────────
-type SlideTab = "effects" | "video" | "sources" | "transition" | "behavior";
+type SlideTab = "effects" | "video" | "sources" | "transition" | "behavior" | "speaker";
 const SlideEditor = memo(function SlideEditor({ slide, transitionDuration, search, onChange, onSolo }: {
   slide: VideoItem; transitionDuration: number; search: string; onChange: (s: VideoItem) => void; onSolo: (s: SoloLayer) => void;
 }) {
@@ -75,6 +76,7 @@ const SlideEditor = memo(function SlideEditor({ slide, transitionDuration, searc
     { id: "sources", label: `Extra videos (${sources.length})` },
     { id: "transition", label: "Transition" },
     { id: "behavior", label: "Auto-advance" },
+    { id: "speaker", label: "Notes & script" },
   ];
 
   return (
@@ -132,6 +134,8 @@ const SlideEditor = memo(function SlideEditor({ slide, transitionDuration, searc
           </div>
         )
       )}
+
+      {tab === "speaker" && <SpeakerTab slide={slide} onPatch={patch} />}
 
       {tab === "behavior" && (
         <SchemaGroups groups={[{ title: "Auto-advance (this slide only)", fields: SLIDE_BEHAVIOR_FIELDS }]}
@@ -209,6 +213,17 @@ const GlobalEditor = memo(function GlobalEditor({ cfg, search, onChange, onSolo 
   );
 });
 
+// Stable component (previously re-created each render, remounting canvases).
+const StageContent = memo(function StageContent({ zoomed, impact, slide, impactSlide, transitionDuration, solo }: {
+  zoomed: boolean; impact: ImpactState | null; slide: VideoItem; impactSlide: VideoItem; transitionDuration: number; solo: SoloLayer;
+}) {
+  return impact ? (
+    <ImpactPreview slide={impactSlide} path={impact.path} variant={impact.variant} current={impact.current} transitionDuration={transitionDuration} aspect="16/9" />
+  ) : (
+    <MiniStage slide={slide} transitionDuration={transitionDuration} soloLayer={solo} active maxFps={zoomed ? undefined : 30} className="w-full h-full" />
+  );
+});
+
 // ── Live preview tile (hover-intent zoom + impact bus A/B) ──
 const LivePreview = ({ slide, transitionDuration, solo = null }: { slide: VideoItem | null; transitionDuration: number; solo?: SoloLayer }) => {
   const [hover, setHover] = useState(false);
@@ -234,20 +249,6 @@ const LivePreview = ({ slide, transitionDuration, solo = null }: { slide: VideoI
   // that slide anyway) so A/B always reflects the field being previewed.
   const impactSlide = impact?.slide ?? slide;
 
-  const StageContent = ({ zoomed }: { zoomed: boolean }) =>
-    impact ? (
-      <ImpactPreview
-        slide={impactSlide}
-        path={impact.path}
-        variant={impact.variant}
-        current={impact.current}
-        transitionDuration={transitionDuration}
-        aspect={zoomed ? "16/9" : "16/9"}
-      />
-    ) : (
-      <MiniStage slide={slide} transitionDuration={transitionDuration} soloLayer={solo} active className="w-full h-full" />
-    );
-
   const badge = impact
     ? `Impact · ${impact.label}`
     : solo !== null
@@ -266,7 +267,7 @@ const LivePreview = ({ slide, transitionDuration, solo = null }: { slide: VideoI
         }`}
         style={{ width: 360, height: 202 }}
       >
-        <div className="absolute inset-0 p-1"><StageContent zoomed={false} /></div>
+        <div className="absolute inset-0 p-1"><StageContent zoomed={false} impact={impact} slide={slide} impactSlide={impactSlide} transitionDuration={transitionDuration} solo={solo} /></div>
         <div className="absolute top-1.5 left-2 text-[9px] font-mono uppercase tracking-[0.2em] text-white bg-black/60 px-1.5 py-0.5 rounded pointer-events-none max-w-[95%] truncate">
           {badge}{!impact && " · hover to zoom"}
         </div>
@@ -282,7 +283,7 @@ const LivePreview = ({ slide, transitionDuration, solo = null }: { slide: VideoI
       onClick={(e) => { if (e.target === e.currentTarget) setHover(false); }}
     >
       <div className={`relative rounded-xl overflow-hidden border shadow-2xl bg-black p-2 ${impact ? "border-amber-300/60" : "border-white/20"}`} style={{ width: "75vw", height: "75vh" }}>
-        <StageContent zoomed />
+        <StageContent zoomed impact={impact} slide={slide} impactSlide={impactSlide} transitionDuration={transitionDuration} solo={solo} />
         <div className="absolute top-3 left-4 text-[10px] font-mono uppercase tracking-[0.2em] text-white bg-black/60 px-2 py-0.5 rounded">
           {impact
             ? `Impact · ${impact.label} · A vs B`

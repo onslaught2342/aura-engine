@@ -100,7 +100,6 @@ export const SLIDE_GROUPS: GroupDef[] = [
     title: "Labelling",
     fields: [
       { key: "label", label: "Label", help: "Short title shown in the slide list and the jump bar. Cosmetic only.", kind: "text" },
-      { key: "notes", label: "Notes", help: "Private notes for this slide. Never shown to viewers.", kind: "text" },
     ],
   },
 ];

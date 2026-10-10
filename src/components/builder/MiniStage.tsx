@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { BackgroundCanvas } from "@/components/BackgroundCanvas";
-import type { VideoItem, VideoSource, SlideBackground } from "@/engine/config";
+import type { VideoItem, VideoSource, SlideBackground, PerformanceConfig } from "@/engine/config";
 import { sanitizeBackground } from "@/lib/cssSanitize";
 
 /** "base" = only the base effect, a number = only that effect layer. */
@@ -17,7 +17,21 @@ interface MiniStageProps {
   soloLayer?: SoloLayer;
   className?: string;
   style?: React.CSSProperties;
+  /** Cap the canvas redraw rate (e.g. 30 for the docked Builder preview). */
+  maxFps?: number;
+  /** Loop the main video (default true). The phone remote passes false so it ends like the big screen. */
+  videoLoop?: boolean;
+  /** Pause the main video (follows the presenter's play/pause). */
+  paused?: boolean;
 }
+
+const perfCache = new Map<number, PerformanceConfig>();
+const perfFor = (fps?: number) => {
+  if (!fps) return undefined;
+  let p = perfCache.get(fps);
+  if (!p) { p = { resolution: 1, maxFPS: fps } as PerformanceConfig; perfCache.set(fps, p); }
+  return p;
+};
 
 /**
  * Shared "what this slide looks like" renderer. Renders the procedural
@@ -33,6 +47,9 @@ export const MiniStage = memo(function MiniStage({
   soloLayer = null,
   className,
   style,
+  maxFps,
+  videoLoop = true,
+  paused = false,
 }: MiniStageProps) {
   const mainRef = useRef<HTMLVideoElement>(null);
 
@@ -47,9 +64,9 @@ export const MiniStage = memo(function MiniStage({
       v.removeAttribute("src");
       v.load();
     }
-    if (active) v.play().catch(() => {});
+    if (active && !paused) v.play().catch(() => {});
     else v.pause();
-  }, [slide.src, active]);
+  }, [slide.src, active, paused]);
 
   const bg = useMemo<SlideBackground>(() => {
     const base = slide.background;
@@ -65,7 +82,7 @@ export const MiniStage = memo(function MiniStage({
     <div className={className} style={{ position: "relative", overflow: "hidden", background: "#000", transform: "translateZ(0)", contain: "paint", ...style }}>
       <div className="absolute inset-0">
         {active ? (
-          <BackgroundCanvas background={bg} transitionDuration={transitionDuration} />
+          <BackgroundCanvas background={bg} transitionDuration={transitionDuration} performance={perfFor(maxFps)} />
         ) : (
           <div className="absolute inset-0" style={{ background: sanitizeBackground(bg.backgroundGradient) || "#000" }} />
         )}
@@ -75,7 +92,7 @@ export const MiniStage = memo(function MiniStage({
           ref={mainRef}
           className="absolute inset-0 w-full h-full"
           style={{ objectFit: "contain" }}
-          autoPlay loop muted playsInline
+          autoPlay={!paused} loop={videoLoop} muted playsInline
         />
       )}
       {withSources && slide.sources?.map((s, i) => (

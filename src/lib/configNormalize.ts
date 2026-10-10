@@ -72,6 +72,8 @@ export function normalizeSlide(slide: Partial<VideoItem> | undefined): VideoItem
     volume: s.volume === undefined ? null : s.volume,
     label: typeof s.label === "string" ? s.label : "",
     notes: typeof s.notes === "string" ? s.notes : "",
+    script: typeof s.script === "string" ? s.script : "",
+    targetSeconds: typeof s.targetSeconds === "number" && s.targetSeconds > 0 ? s.targetSeconds : null,
     transition: normalizeTransition(s.transition as SlideTransition | null | undefined),
     sources: Array.isArray(s.sources) ? s.sources.map((x) => normalizeSource(x as VideoSource)) : [],
     background: normalizeBackground(s.background as SlideBackground | undefined),

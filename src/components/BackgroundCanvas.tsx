@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import type { SlideBackground, EffectLayer, PerformanceConfig } from "@/engine/config";
 import type { BackgroundLayer, EffectParams } from "@/engine/backgrounds/types";
 import { backgroundRegistry } from "@/engine/backgrounds/registry";
@@ -58,7 +58,7 @@ class EffectCache {
 // Module-level cache shared across renders but scoped to component lifetime via ref
 const globalEffectCache = new EffectCache(12);
 
-export const BackgroundCanvas = ({ background, transitionDuration, performance }: Props) => {
+export const BackgroundCanvas = memo(function BackgroundCanvas({ background, transitionDuration, performance }: Props) {
   const canvasARef = useRef<HTMLCanvasElement>(null);
   const canvasBRef = useRef<HTMLCanvasElement>(null);
   const extraCanvasesRef = useRef<HTMLCanvasElement[]>([]);
@@ -346,4 +346,4 @@ export const BackgroundCanvas = ({ background, transitionDuration, performance }
       {vignetteStyle && <div style={vignetteStyle} />}
     </div>
   );
-};
+});

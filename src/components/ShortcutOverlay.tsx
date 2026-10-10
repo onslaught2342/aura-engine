@@ -22,6 +22,9 @@ const shortcuts = [
     { key: "F5", desc: "Enter fullscreen" },
     { key: "Media ⏮ ⏯ ⏭", desc: "Prev / Play-Pause / Next" },
     { key: "Gamepad D-pad", desc: "Prev / Next slide" },
+    { key: "L", desc: "Pointer: laser → spotlight → off" },
+    { key: "Hold Ctrl", desc: "Show laser while held" },
+    { key: "Gamepad stick", desc: "Move pointer" },
   ]},
   { category: "Tools", items: [
     { key: "/builder", desc: "Open Config Builder" },

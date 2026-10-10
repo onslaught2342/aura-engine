@@ -74,7 +74,7 @@ export const ImpactPreview = memo(function ImpactPreview({
 
 const Tile = ({ slide, label, active, transitionDuration, aspect }: { slide: VideoItem; label: string; active: boolean; transitionDuration: number; aspect: string }) => (
   <div className="relative rounded border border-white/10 overflow-hidden bg-black" style={{ aspectRatio: aspect }}>
-    <MiniStage slide={slide} transitionDuration={transitionDuration} active={active} withSources className="w-full h-full" />
+    <MiniStage slide={slide} transitionDuration={transitionDuration} active={active} withSources maxFps={30} className="w-full h-full" />
     <div className="absolute bottom-1 left-1 text-[9px] font-mono uppercase tracking-wider text-white/80 bg-black/60 px-1.5 py-0.5 rounded-sm pointer-events-none">{label}</div>
   </div>
 );

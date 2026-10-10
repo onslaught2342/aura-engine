@@ -14,6 +14,7 @@ import { prewarmThumbs } from "@/lib/videoThumbCache";
 import { builderStore } from "@/lib/builderStore";
 import { usePresentationRemotes } from "@/hooks/usePresentationRemotes";
 import { PresenterLink } from "@/components/remote/PresenterLink";
+import { LocalPointer } from "@/components/LocalPointer";
 
 const Index = () => {
   const [engineConfig, setEngineConfig] = useState<EngineConfig>(() => {
@@ -303,6 +304,7 @@ const Index = () => {
       {blank && <div className="fixed inset-0" style={{ zIndex: 30, background: "#000" }} />}
 
       {/* Phone / tablet remote pairing */}
+      <LocalPointer enabled={engineConfig.controls.keyboardShortcutsEnabled !== false} />
       {engineConfig.controls.remoteEnabled !== false && (
         <PresenterLink
           config={engineConfig}

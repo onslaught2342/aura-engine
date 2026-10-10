@@ -100,15 +100,44 @@ export interface BackgroundConfig {
   blendMode: GlobalCompositeOperation;
 }
 
-export type TransitionType = "fade" | "wipeLeft" | "wipeRight" | "wipeUp" | "wipeDown" |
-  "slideLeft" | "slideRight" | "slideUp" | "slideDown" |
-  "zoomIn" | "zoomOut" | "zoomRotate" |
-  "flipX" | "flipY" | "blur" | "dissolve" | "iris" |
-  "swirl" | "curtain" | "glitch" |
-  "splitHorizontal" | "splitVertical" | "rotate" | "bounce" | "morph" |
-  "pixelate" | "blinds" | "diamond" | "crossZoom" | "doorway";
+export type TransitionType =
+  | "fade"
+  | "wipeLeft"
+  | "wipeRight"
+  | "wipeUp"
+  | "wipeDown"
+  | "slideLeft"
+  | "slideRight"
+  | "slideUp"
+  | "slideDown"
+  | "zoomIn"
+  | "zoomOut"
+  | "zoomRotate"
+  | "flipX"
+  | "flipY"
+  | "blur"
+  | "dissolve"
+  | "iris"
+  | "swirl"
+  | "curtain"
+  | "glitch"
+  | "splitHorizontal"
+  | "splitVertical"
+  | "rotate"
+  | "bounce"
+  | "morph"
+  | "pixelate"
+  | "blinds"
+  | "diamond"
+  | "crossZoom"
+  | "doorway";
 
-export type TransitionEasing = "linear" | "ease" | "ease-in" | "ease-out" | "ease-in-out";
+export type TransitionEasing =
+  | "linear"
+  | "ease"
+  | "ease-in"
+  | "ease-out"
+  | "ease-in-out";
 
 export interface SlideTransition {
   type: TransitionType;
@@ -123,6 +152,10 @@ export interface VideoItem {
   volume?: number;
   label?: string;
   notes?: string;
+  /** Longer teleprompter script for the phone remote's Rehearse tab. Falls back to notes. */
+  script?: string;
+  /** Target seconds on this slide for rehearsal pacing alerts. null = use the phone's setting. */
+  targetSeconds?: number | null;
   transition?: SlideTransition;
   sources: VideoSource[];
   background: SlideBackground;
@@ -131,7 +164,6 @@ export interface VideoItem {
   /** Optional per-slide delay (seconds) — overrides global controls.autoAdvanceDelay when defined. */
   autoAdvanceDelay?: number;
 }
-
 
 export interface MetaConfig {
   title: string;
@@ -201,7 +233,13 @@ export interface WatermarkConfig {
   imageUrl: string;
   imageWidth: number;
   imageHeight: number;
-  position: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | "custom";
+  position:
+    | "top-left"
+    | "top-right"
+    | "bottom-left"
+    | "bottom-right"
+    | "center"
+    | "custom";
   x: number;
   y: number;
   opacity: number;
@@ -265,25 +303,21 @@ export interface EngineConfig {
 // ── Master config — pure JSON data, no runtime expressions ──
 
 export const CONFIG: EngineConfig = {
-
-  /* ── Meta ── */
   meta: {
     title: "Onslaught Presentation",
     version: "5.0.0",
     author: "",
     description: "",
     tags: [],
-    createdAt: "",
-    updatedAt: "",
+    createdAt: "2026-10-10T07:07:04.712Z",
+    updatedAt: "2026-10-10T07:27:46.538Z",
     thumbnail: "",
     license: "",
     language: "en",
     category: "",
     projectUrl: "",
-    coverImage: ""
+    coverImage: "",
   },
-
-  /* ── Defaults ── */
   defaults: {
     background: {
       type: "starfield",
@@ -312,7 +346,7 @@ export const CONFIG: EngineConfig = {
       pixelate: 0,
       scanlines: false,
       scanlineIntensity: 30,
-      filmGrain: 0
+      filmGrain: 0,
     },
     effectLayer: {
       type: "starfield",
@@ -338,7 +372,7 @@ export const CONFIG: EngineConfig = {
       amplitude: 50,
       phase: 0,
       decay: 0,
-      colorMode: "solid"
+      colorMode: "solid",
     },
     videoSource: {
       src: "",
@@ -365,19 +399,15 @@ export const CONFIG: EngineConfig = {
       cropTop: 0,
       cropBottom: 0,
       cropLeft: 0,
-      cropRight: 0
+      cropRight: 0,
     },
     defaultTransition: {
       type: "fade",
       duration: 0.8,
-      easing: "ease"
-    }
+      easing: "ease",
+    },
   },
-
-  /* ── Background layers (global overlays) ── */
   backgrounds: [],
-
-  /* ── Video / Playlist ── */
   video: {
     fit: "contain",
     controls: false,
@@ -386,13 +416,20 @@ export const CONFIG: EngineConfig = {
     preloadStrategy: "next",
     bufferSize: 5,
     playlist: [
-
-      /* ── Slide 1 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/1.webm",
+        src: "./pptx/1.webm",
         loop: false,
         muted: true,
-        transition: { type: "fade", duration: 0.5, easing: "linear" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 0.5,
+          easing: "linear",
+        },
         sources: [],
         background: {
           type: "goldenDust",
@@ -421,16 +458,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 2 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/2.webm",
+        src: "./pptx/2.webm",
         loop: false,
         muted: true,
-        transition: { type: "wipeLeft", duration: 0.6, easing: "ease" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 0.6,
+          easing: "ease",
+        },
         sources: [],
         background: {
           type: "starfield",
@@ -459,16 +505,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 3 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/3.webm",
+        src: "./pptx/3.webm",
         loop: false,
         muted: true,
-        transition: { type: "wipeRight", duration: 0.7, easing: "ease-in" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeRight",
+          duration: 0.7,
+          easing: "ease-in",
+        },
         sources: [],
         background: {
           type: "auroraWave",
@@ -497,16 +552,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 4 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/4.webm",
+        src: "./pptx/4.webm",
         loop: false,
         muted: true,
-        transition: { type: "wipeUp", duration: 0.8, easing: "ease-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeUp",
+          duration: 0.8,
+          easing: "ease-out",
+        },
         sources: [],
         background: {
           type: "neonGrid",
@@ -535,16 +599,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 5 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/5.webm",
+        src: "./pptx/5.webm",
         loop: false,
         muted: true,
-        transition: { type: "wipeDown", duration: 0.9, easing: "ease-in-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeDown",
+          duration: 0.9,
+          easing: "ease-in-out",
+        },
         sources: [],
         background: {
           type: "fireEmbers",
@@ -573,16 +646,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 6 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/6.webm",
+        src: "./pptx/6.webm",
         loop: false,
         muted: true,
-        transition: { type: "slideLeft", duration: 1.0, easing: "linear" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "slideLeft",
+          duration: 1,
+          easing: "linear",
+        },
         sources: [],
         background: {
           type: "electricStorm",
@@ -611,16 +693,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 7 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/7.webm",
+        src: "./pptx/7.webm",
         loop: false,
         muted: true,
-        transition: { type: "slideRight", duration: 1.1, easing: "ease" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "slideRight",
+          duration: 1.1,
+          easing: "ease",
+        },
         sources: [],
         background: {
           type: "cinemaGrain",
@@ -649,16 +740,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 8 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/8.webm",
+        src: "./pptx/8.webm",
         loop: false,
         muted: true,
-        transition: { type: "slideUp", duration: 1.2, easing: "ease-in" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "slideUp",
+          duration: 1.2,
+          easing: "ease-in",
+        },
         sources: [],
         background: {
           type: "smokeRing",
@@ -687,16 +787,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 9 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/9.webm",
+        src: "./pptx/9.webm",
         loop: false,
         muted: true,
-        transition: { type: "slideDown", duration: 1.3, easing: "ease-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "slideDown",
+          duration: 1.3,
+          easing: "ease-out",
+        },
         sources: [],
         background: {
           type: "matrixRain",
@@ -725,16 +834,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 10 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/10.webm",
+        src: "./pptx/10.webm",
         loop: false,
         muted: true,
-        transition: { type: "zoomIn", duration: 1.5, easing: "ease-in-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 1.5,
+          easing: "ease-in-out",
+        },
         sources: [],
         background: {
           type: "plasmaField",
@@ -763,16 +881,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 11 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/11.webm",
+        src: "./pptx/11.webm",
         loop: false,
         muted: true,
-        transition: { type: "zoomOut", duration: 0.8, easing: "linear" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "zoomOut",
+          duration: 0.8,
+          easing: "linear",
+        },
         sources: [],
         background: {
           type: "rainfall",
@@ -801,16 +928,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 12 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/12.webm",
+        src: "./pptx/12.webm",
         loop: false,
         muted: true,
-        transition: { type: "zoomRotate", duration: 0.6, easing: "ease" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "zoomRotate",
+          duration: 0.6,
+          easing: "ease",
+        },
         sources: [],
         background: {
           type: "dnaHelix",
@@ -839,16 +975,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 13 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/13.webm",
+        src: "./pptx/13.webm",
         loop: false,
         muted: true,
-        transition: { type: "flipX", duration: 0.7, easing: "ease-in" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "flipX",
+          duration: 0.7,
+          easing: "ease-in",
+        },
         sources: [],
         background: {
           type: "cosmicDust",
@@ -877,16 +1022,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 14 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/14.webm",
+        src: "./pptx/14.webm",
         loop: false,
         muted: true,
-        transition: { type: "flipY", duration: 0.9, easing: "ease-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "flipY",
+          duration: 0.9,
+          easing: "ease-out",
+        },
         sources: [],
         background: {
           type: "blackHole",
@@ -915,16 +1069,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 15 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/15.webm",
+        src: "./pptx/15.webm",
         loop: false,
         muted: true,
-        transition: { type: "blur", duration: 1.0, easing: "ease-in-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "blur",
+          duration: 1,
+          easing: "ease-in-out",
+        },
         sources: [],
         background: {
           type: "galaxy",
@@ -953,16 +1116,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 16 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/16.webm",
+        src: "./pptx/16.webm",
         loop: false,
         muted: true,
-        transition: { type: "dissolve", duration: 1.2, easing: "linear" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "dissolve",
+          duration: 1.2,
+          easing: "linear",
+        },
         sources: [],
         background: {
           type: "meteorShower",
@@ -991,16 +1163,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 17 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/17.webm",
+        src: "./pptx/17.webm",
         loop: false,
         muted: true,
-        transition: { type: "iris", duration: 1.0, easing: "ease" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "iris",
+          duration: 1,
+          easing: "ease",
+        },
         sources: [],
         background: {
           type: "nebula",
@@ -1029,16 +1210,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 18 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/18.webm",
+        src: "./pptx/18.webm",
         loop: false,
         muted: true,
-        transition: { type: "swirl", duration: 1.5, easing: "ease-in" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 1.5,
+          easing: "ease-in",
+        },
         sources: [],
         background: {
           type: "oceanWaves",
@@ -1067,16 +1257,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 19 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/19.webm",
+        src: "./pptx/19.webm",
         loop: false,
         muted: true,
-        transition: { type: "curtain", duration: 0.9, easing: "ease-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "curtain",
+          duration: 0.9,
+          easing: "ease-out",
+        },
         sources: [],
         background: {
           type: "snowfall",
@@ -1105,16 +1304,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 20 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/20.webm",
+        src: "./pptx/20.webm",
         loop: false,
         muted: true,
-        transition: { type: "glitch", duration: 0.6, easing: "linear" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "glitch",
+          duration: 0.6,
+          easing: "linear",
+        },
         sources: [],
         background: {
           type: "fireflies",
@@ -1143,16 +1351,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 21 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/21.webm",
+        src: "./pptx/21.webm",
         loop: false,
         muted: true,
-        transition: { type: "splitHorizontal", duration: 0.8, easing: "ease-in-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "splitHorizontal",
+          duration: 0.8,
+          easing: "ease-in-out",
+        },
         sources: [],
         background: {
           type: "lightningBolts",
@@ -1181,16 +1398,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 22 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/22.webm",
+        src: "./pptx/22.webm",
         loop: false,
         muted: true,
-        transition: { type: "splitVertical", duration: 0.7, easing: "ease" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeRight",
+          duration: 0.7,
+          easing: "ease",
+        },
         sources: [],
         background: {
           type: "vortexTunnel",
@@ -1219,16 +1445,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 23 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/23.webm",
+        src: "./pptx/23.webm",
         loop: false,
         muted: true,
-        transition: { type: "rotate", duration: 1.0, easing: "ease-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeUp",
+          duration: 1,
+          easing: "ease-out",
+        },
         sources: [],
         background: {
           type: "northernLights",
@@ -1257,16 +1492,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 24 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/24.webm",
+        src: "./pptx/24.webm",
         loop: false,
         muted: true,
-        transition: { type: "bounce", duration: 0.9, easing: "ease-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "slideRight",
+          duration: 0.9,
+          easing: "ease-out",
+        },
         sources: [],
         background: {
           type: "raindropRipples",
@@ -1295,16 +1539,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 25 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/25.webm",
+        src: "./pptx/25.webm",
         loop: false,
         muted: true,
-        transition: { type: "morph", duration: 1.3, easing: "ease-in-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "slideLeft",
+          duration: 1.3,
+          easing: "ease-in-out",
+        },
         sources: [],
         background: {
           type: "lavaLamp",
@@ -1333,16 +1586,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 26 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/26.webm",
+        src: "./pptx/26.webm",
         loop: false,
         muted: true,
-        transition: { type: "pixelate", duration: 0.8, easing: "linear" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "pixelate",
+          duration: 0.8,
+          easing: "linear",
+        },
         sources: [],
         background: {
           type: "crystalMatrix",
@@ -1371,16 +1633,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 27 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/27.webm",
+        src: "./pptx/27.webm",
         loop: false,
         muted: true,
-        transition: { type: "blinds", duration: 1.0, easing: "ease-in" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "blinds",
+          duration: 1,
+          easing: "ease-in",
+        },
         sources: [],
         background: {
           type: "digitalCircuit",
@@ -1409,16 +1680,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 28 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/28.webm",
+        src: "./pptx/28.webm",
         loop: false,
         muted: true,
-        transition: { type: "diamond", duration: 1.1, easing: "ease" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "diamond",
+          duration: 1.1,
+          easing: "ease",
+        },
         sources: [],
         background: {
           type: "solarFlare",
@@ -1447,16 +1727,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 29 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/29.webm",
+        src: "./pptx/29.webm",
         loop: false,
         muted: true,
-        transition: { type: "crossZoom", duration: 0.7, easing: "ease-in-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 0.7,
+          easing: "ease-in-out",
+        },
         sources: [],
         background: {
           type: "geometricTessellation",
@@ -1485,16 +1774,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 30 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/30.webm",
+        src: "./pptx/30.webm",
         loop: false,
         muted: true,
-        transition: { type: "doorway", duration: 1.0, easing: "ease-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "doorway",
+          duration: 1,
+          easing: "ease-out",
+        },
         sources: [],
         background: {
           type: "inkBleed",
@@ -1523,16 +1821,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 31 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/31.webm",
+        src: "./pptx/31.webm",
         loop: false,
         muted: true,
-        transition: { type: "wipeLeft", duration: 0.8, easing: "ease-in" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeLeft",
+          duration: 0.8,
+          easing: "ease-in",
+        },
         sources: [],
         background: {
           type: "glitchWave",
@@ -1561,16 +1868,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 32 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/32.webm",
+        src: "./pptx/32.webm",
         loop: false,
         muted: true,
-        transition: { type: "zoomRotate", duration: 1.2, easing: "ease" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 1.2,
+          easing: "ease",
+        },
         sources: [],
         background: {
           type: "interactiveParticles",
@@ -1599,16 +1915,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 33 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/33.webm",
+        src: "./pptx/33.webm",
         loop: false,
         muted: true,
-        transition: { type: "flipX", duration: 0.9, easing: "ease-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 0.9,
+          easing: "ease-out",
+        },
         sources: [],
         background: {
           type: "blurredGradients",
@@ -1637,16 +1962,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 34 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/34.webm",
+        src: "./pptx/34.webm",
         loop: false,
         muted: true,
-        transition: { type: "iris", duration: 1.1, easing: "ease-in-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "iris",
+          duration: 1.1,
+          easing: "ease-in-out",
+        },
         sources: [],
         background: {
           type: "parallaxField",
@@ -1675,16 +2009,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 35 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/35.webm",
+        src: "./pptx/35.webm",
         loop: false,
         muted: true,
-        transition: { type: "slideLeft", duration: 0.7, easing: "linear" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "slideLeft",
+          duration: 0.7,
+          easing: "linear",
+        },
         sources: [],
         background: {
           type: "animatedShapes",
@@ -1713,16 +2056,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 36 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/36.webm",
+        src: "./pptx/36.webm",
         loop: false,
         muted: true,
-        transition: { type: "swirl", duration: 1.3, easing: "ease" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 1.3,
+          easing: "ease",
+        },
         sources: [],
         background: {
           type: "kaleidoscope",
@@ -1751,16 +2103,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 37 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/37.webm",
+        src: "./pptx/37.webm",
         loop: false,
         muted: true,
-        transition: { type: "curtain", duration: 0.8, easing: "ease-in" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "curtain",
+          duration: 0.8,
+          easing: "ease-in",
+        },
         sources: [],
         background: {
           type: "waveInterference",
@@ -1789,16 +2150,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 38 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/38.webm",
+        src: "./pptx/38.webm",
         loop: false,
         muted: true,
-        transition: { type: "wipeUp", duration: 1.0, easing: "ease-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeUp",
+          duration: 1,
+          easing: "ease-out",
+        },
         sources: [],
         background: {
           type: "cellularAutomata",
@@ -1827,16 +2197,25 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 39 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/39.webm",
+        src: "./pptx/39.webm",
         loop: false,
         muted: true,
-        transition: { type: "blur", duration: 0.9, easing: "ease-in-out" },
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "blur",
+          duration: 0.9,
+          easing: "ease-in-out",
+        },
         sources: [],
         background: {
           type: "fractalTree",
@@ -1865,274 +2244,1343 @@ export const CONFIG: EngineConfig = {
           pixelate: 0,
           scanlines: false,
           scanlineIntensity: 30,
-          filmGrain: 0
-        }
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 40 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/40.webm",
-        loop: false, muted: true, transition: { type: "slideDown", duration: 0.8, easing: "ease" }, sources: [],
+        src: "./pptx/40.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "slideDown",
+          duration: 0.8,
+          easing: "ease",
+        },
+        sources: [],
         background: {
-          type: "holographicShimmer", color: "0", opacity: 1, blendMode: "screen",
-          saturation: 80, brightness: 50, speed: 1, intensity: 50, scale: 1,
-          turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 0, vignetteColor: "0,0,0", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "holographicShimmer",
+          color: "0",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 80,
+          brightness: 50,
+          speed: 1,
+          intensity: 50,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 0,
+          vignetteColor: "0,0,0",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 41 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/41.webm",
-        loop: false, muted: true, transition: { type: "zoomIn", duration: 1.0, easing: "ease-in" }, sources: [],
+        src: "./pptx/41.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "zoomIn",
+          duration: 1,
+          easing: "ease-in",
+        },
+        sources: [],
         background: {
-          type: "magneticField", color: "200", opacity: 1, blendMode: "screen",
-          saturation: 80, brightness: 50, speed: 1, intensity: 50, scale: 1,
-          turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 0, vignetteColor: "0,0,0", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "magneticField",
+          color: "200",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 80,
+          brightness: 50,
+          speed: 1,
+          intensity: 50,
+          scale: 0.4,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 0,
+          vignetteColor: "0,0,0",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 42 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/42.webm",
-        loop: false, muted: true, transition: { type: "flipY", duration: 0.9, easing: "ease-out" }, sources: [],
+        src: "./pptx/42.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "dissolve",
+          duration: 0.9,
+          easing: "ease-out",
+        },
+        sources: [],
         background: {
-          type: "retroSunset", color: "340", opacity: 1, blendMode: "source-over",
-          saturation: 90, brightness: 50, speed: 1, intensity: 50, scale: 1,
-          turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 20, vignetteColor: "0,0,0", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: true, scanlineIntensity: 20, filmGrain: 0
-        }
+          type: "retroSunset",
+          color: "340",
+          opacity: 1,
+          blendMode: "source-over",
+          saturation: 90,
+          brightness: 50,
+          speed: 1,
+          intensity: 50,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 20,
+          vignetteColor: "0,0,0",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: true,
+          scanlineIntensity: 20,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 43 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/43.webm",
-        loop: false, muted: true, transition: { type: "dissolve", duration: 1.3, easing: "ease-in-out" }, sources: [],
+        src: "./pptx/43.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "dissolve",
+          duration: 1.3,
+          easing: "ease-in-out",
+        },
+        sources: [],
         background: {
-          type: "quantumField", color: "260", opacity: 1, blendMode: "screen",
-          saturation: 80, brightness: 50, speed: 1, intensity: 50, scale: 1,
-          turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 0, vignetteColor: "0,0,0", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "quantumField",
+          color: "260",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 80,
+          brightness: 50,
+          speed: 1,
+          intensity: 50,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 0,
+          vignetteColor: "0,0,0",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 44 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/44.webm",
-        loop: false, muted: true, transition: { type: "wipeRight", duration: 0.7, easing: "linear" }, sources: [],
+        src: "./pptx/44.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeRight",
+          duration: 0.7,
+          easing: "linear",
+        },
+        sources: [],
         background: {
-          type: "coralReef", color: "170", opacity: 1, blendMode: "screen",
-          saturation: 70, brightness: 50, speed: 1, intensity: 50, scale: 1,
-          turbulence: 40, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 10, vignetteColor: "0,0,30", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "coralReef",
+          color: "170",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 70,
+          brightness: 50,
+          speed: 1,
+          intensity: 50,
+          scale: 1,
+          turbulence: 40,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 10,
+          vignetteColor: "0,0,30",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 45 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/45.webm",
-        loop: false, muted: true, transition: { type: "glitch", duration: 0.5, easing: "ease" }, sources: [],
+        src: "./pptx/45.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "glitch",
+          duration: 0.5,
+          easing: "ease",
+        },
+        sources: [],
         background: {
-          type: "acidTrip", color: "0", opacity: 1, blendMode: "screen",
-          saturation: 100, brightness: 60, speed: 1, intensity: 60, scale: 1,
-          turbulence: 60, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 0, vignetteColor: "0,0,0", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "acidTrip",
+          color: "0",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 60,
+          speed: 1,
+          intensity: 60,
+          scale: 1,
+          turbulence: 60,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 0,
+          vignetteColor: "0,0,0",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 46 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/46.webm",
-        loop: false, muted: true, transition: { type: "morph", duration: 1.1, easing: "ease-in" }, sources: [],
+        src: "./pptx/46.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "morph",
+          duration: 1.1,
+          easing: "ease-in",
+        },
+        sources: [],
         background: {
-          type: "tidalWave", color: "200", opacity: 1, blendMode: "screen",
-          saturation: 80, brightness: 50, speed: 1, intensity: 55, scale: 1,
-          turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 10, vignetteColor: "0,0,20", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "tidalWave",
+          color: "200",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 80,
+          brightness: 50,
+          speed: 1,
+          intensity: 55,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 10,
+          vignetteColor: "0,0,20",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 47 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/47.webm",
-        loop: false, muted: true, transition: { type: "diamond", duration: 1.0, easing: "ease-out" }, sources: [],
+        src: "./pptx/47.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "diamond",
+          duration: 1,
+          easing: "ease-out",
+        },
+        sources: [],
         background: {
-          type: "crystalGrowth", color: "180", opacity: 1, blendMode: "screen",
-          saturation: 75, brightness: 50, speed: 1, intensity: 50, scale: 1,
-          turbulence: 40, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 5, vignetteColor: "0,0,0", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "crystalGrowth",
+          color: "180",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 75,
+          brightness: 50,
+          speed: 1,
+          intensity: 50,
+          scale: 1,
+          turbulence: 40,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 5,
+          vignetteColor: "0,0,0",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 48 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/48.webm",
-        loop: false, muted: true, transition: { type: "crossZoom", duration: 0.8, easing: "ease-in-out" }, sources: [],
+        src: "./pptx/48.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeUp",
+          duration: 0.8,
+          easing: "ease-in-out",
+        },
+        sources: [],
         background: {
-          type: "fireworksBurst", color: "30", opacity: 1, blendMode: "screen",
-          saturation: 90, brightness: 55, speed: 1, intensity: 60, scale: 1,
-          turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 0, vignetteColor: "0,0,0", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "fireworksBurst",
+          color: "30",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 90,
+          brightness: 55,
+          speed: 1,
+          intensity: 60,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 0,
+          vignetteColor: "0,0,0",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 49 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/49.webm",
-        loop: false, muted: true, transition: { type: "blinds", duration: 0.9, easing: "linear" }, sources: [],
+        src: "./pptx/49.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "blinds",
+          duration: 0.9,
+          easing: "linear",
+        },
+        sources: [],
         background: {
-          type: "topography", color: "120", opacity: 1, blendMode: "screen",
-          saturation: 60, brightness: 45, speed: 1, intensity: 50, scale: 1,
-          turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 0, vignetteColor: "0,0,0", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "topography",
+          color: "120",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 60,
+          brightness: 45,
+          speed: 1,
+          intensity: 50,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 0,
+          vignetteColor: "0,0,0",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 50 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/50.webm",
-        loop: false, muted: true, transition: { type: "rotate", duration: 1.2, easing: "ease" }, sources: [],
+        src: "./pptx/50.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeLeft",
+          duration: 1.2,
+          easing: "ease",
+        },
+        sources: [],
         background: {
-          type: "prismRefraction", color: "0", opacity: 1, blendMode: "screen",
-          saturation: 85, brightness: 50, speed: 1, intensity: 55, scale: 1,
-          turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "180", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 0, vignetteColor: "0,0,0", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "prismRefraction",
+          color: "0",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 85,
+          brightness: 50,
+          speed: 1,
+          intensity: 55,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 0,
+          vignetteColor: "0,0,0",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-
-      /* ── Slide 51 ── */
       {
-        src: "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/7.webm",
-        loop: false, muted: true, transition: { type: "slideRight", duration: 0.7, easing: "ease-in" }, sources: [],
+        src: "./pptx/51.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "slideRight",
+          duration: 0.7,
+          easing: "ease-in",
+        },
+        sources: [],
         background: {
-          type: "powerNexus", color: "200", opacity: 1, blendMode: "screen",
-          saturation: 100, brightness: 60, speed: 1, intensity: 70, scale: 1,
-          turbulence: 60, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5,
-          secondaryColor: "300", effectLayers: [], backgroundGradient: "",
-          vignetteStrength: 20, vignetteColor: "0,0,30", colorFilter: "",
-          transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50,
-          motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0
-        }
+          type: "powerNexus",
+          color: "200",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 60,
+          speed: 1,
+          intensity: 70,
+          scale: 1,
+          turbulence: 60,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "300",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 20,
+          vignetteColor: "0,0,30",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 52 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "wipeDown", duration: 0.8, easing: "ease-out" }, sources: [],
-        background: { type: "sandStorm", color: "35", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 60, scale: 1, turbulence: 70, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "30", effectLayers: [], backgroundGradient: "", vignetteStrength: 15, vignetteColor: "0,0,20", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/52.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "wipeDown",
+          duration: 0.8,
+          easing: "ease-out",
+        },
+        sources: [],
+        background: {
+          type: "sandStorm",
+          color: "35",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 60,
+          scale: 1,
+          turbulence: 70,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "30",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 15,
+          vignetteColor: "0,0,20",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 53 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "bounce", duration: 0.9, easing: "ease" }, sources: [],
-        background: { type: "bubbleRise", color: "200", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 55, scale: 1.2, turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "220", effectLayers: [], backgroundGradient: "", vignetteStrength: 10, vignetteColor: "0,0,20", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/53.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "bounce",
+          duration: 0.9,
+          easing: "ease",
+        },
+        sources: [],
+        background: {
+          type: "bubbleRise",
+          color: "200",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 55,
+          scale: 1.2,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "220",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 10,
+          vignetteColor: "0,0,20",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 54 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "pixelate", duration: 0.7, easing: "linear" }, sources: [],
-        background: { type: "gravityWell", color: "280", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 65, scale: 1, turbulence: 60, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "300", effectLayers: [], backgroundGradient: "", vignetteStrength: 20, vignetteColor: "0,0,30", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/54.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "pixelate",
+          duration: 0.7,
+          easing: "linear",
+        },
+        sources: [],
+        background: {
+          type: "gravityWell",
+          color: "280",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 65,
+          scale: 1,
+          turbulence: 60,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "300",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 20,
+          vignetteColor: "0,0,30",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 55 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "splitHorizontal", duration: 1.0, easing: "ease-in" }, sources: [],
-        background: { type: "neuralNetwork", color: "180", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 60, scale: 1, turbulence: 55, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "200", effectLayers: [], backgroundGradient: "", vignetteStrength: 10, vignetteColor: "0,0,20", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/55.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "splitHorizontal",
+          duration: 1,
+          easing: "ease-in",
+        },
+        sources: [],
+        background: {
+          type: "neuralNetwork",
+          color: "180",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 60,
+          scale: 1,
+          turbulence: 55,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "200",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 10,
+          vignetteColor: "0,0,20",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 56 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "doorway", duration: 1.1, easing: "ease-in-out" }, sources: [],
-        background: { type: "pendulum", color: "45", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 50, scale: 1, turbulence: 60, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "60", effectLayers: [], backgroundGradient: "", vignetteStrength: 10, vignetteColor: "0,0,20", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/56.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "doorway",
+          duration: 1.1,
+          easing: "ease-in-out",
+        },
+        sources: [],
+        background: {
+          type: "pendulum",
+          color: "45",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 50,
+          scale: 1,
+          turbulence: 60,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "60",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 10,
+          vignetteColor: "0,0,20",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 57 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "fade", duration: 1.5, easing: "ease-out" }, sources: [],
-        background: { type: "flockingBoids", color: "160", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 55, scale: 1, turbulence: 65, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "140", effectLayers: [], backgroundGradient: "", vignetteStrength: 10, vignetteColor: "0,0,20", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/57.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 1.5,
+          easing: "ease-out",
+        },
+        sources: [],
+        background: {
+          type: "flockingBoids",
+          color: "160",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 55,
+          scale: 1,
+          turbulence: 65,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "140",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 10,
+          vignetteColor: "0,0,20",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 58 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "zoomOut", duration: 0.8, easing: "ease" }, sources: [],
-        background: { type: "pixelSort", color: "0", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 50, scale: 1, turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "180", effectLayers: [], backgroundGradient: "", vignetteStrength: 0, vignetteColor: "0,0,20", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/58.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "zoomOut",
+          duration: 0.8,
+          easing: "ease",
+        },
+        sources: [],
+        background: {
+          type: "pixelSort",
+          color: "0",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 50,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "180",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 0,
+          vignetteColor: "0,0,20",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 59 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "slideUp", duration: 0.6, easing: "ease-in" }, sources: [],
-        background: { type: "spiralGalaxy", color: "220", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 60, scale: 1, turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "240", effectLayers: [], backgroundGradient: "", vignetteStrength: 15, vignetteColor: "0,0,30", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 0.6,
+          easing: "ease-in",
+        },
+        sources: [
+          {
+            src: "https://cdn.onslaught2342.qzz.io/assets/videos/wallpapers/aura.mp4",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            fit: "contain",
+            opacity: 0.35,
+            volume: 1,
+            zIndex: 1,
+            loop: true,
+            muted: true,
+            borderRadius: 0,
+            rotation: 0,
+            filter: "",
+            startTime: 0,
+            endTime: 0,
+            playbackRate: 1,
+            chromaKey: "",
+            chromaKeyThreshold: 36,
+            shadow: "",
+            blendMode: "source-over",
+            cropTop: 0,
+            cropBottom: 0,
+            cropLeft: 0,
+            cropRight: 0,
+          },
+          {
+            src: "./pptx/59.webm",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            fit: "contain",
+            opacity: 1,
+            volume: 1,
+            zIndex: 1,
+            loop: false,
+            muted: true,
+            borderRadius: 0,
+            rotation: 0,
+            filter: "",
+            startTime: 0,
+            endTime: 0,
+            playbackRate: 1,
+            chromaKey: "",
+            chromaKeyThreshold: 50,
+            shadow: "",
+            blendMode: "source-over",
+            cropTop: 0,
+            cropBottom: 0,
+            cropLeft: 0,
+            cropRight: 0,
+          },
+        ],
+        background: {
+          type: "spiralGalaxy",
+          color: "220",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 60,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "240",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 15,
+          vignetteColor: "0,0,30",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 60 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "splitVertical", duration: 1.0, easing: "ease-in-out" }, sources: [],
-        background: { type: "waterColor", color: "30", opacity: 1, blendMode: "source-over", saturation: 100, brightness: 50, speed: 1, intensity: 55, scale: 1.1, turbulence: 60, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "50", effectLayers: [], backgroundGradient: "", vignetteStrength: 10, vignetteColor: "0,0,20", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/60.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "splitVertical",
+          duration: 1,
+          easing: "ease-in-out",
+        },
+        sources: [],
+        background: {
+          type: "waterColor",
+          color: "30",
+          opacity: 1,
+          blendMode: "source-over",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 55,
+          scale: 1.1,
+          turbulence: 60,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "50",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 10,
+          vignetteColor: "0,0,20",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 61 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "crossZoom", duration: 0.9, easing: "linear" }, sources: [],
-        background: { type: "chandelier", color: "40", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 60, scale: 1, turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "60", effectLayers: [], backgroundGradient: "", vignetteStrength: 15, vignetteColor: "0,0,20", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
-       },
-      /* ── Slide 62 ── */
-      {
-        src: "", loop: false, muted: true, transition: { type: "fade", duration: 0.8, easing: "ease" }, sources: [],
-        background: { type: "morningDew", color: "150", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 55, scale: 1, turbulence: 40, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "160", effectLayers: [], backgroundGradient: "", vignetteStrength: 10, vignetteColor: "0,0,15", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/61.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "pixelate",
+          duration: 0.9,
+          easing: "linear",
+        },
+        sources: [],
+        background: {
+          type: "chandelier",
+          color: "40",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 60,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "60",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 15,
+          vignetteColor: "0,0,20",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 63 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "slideLeft", duration: 0.9, easing: "ease" }, sources: [],
-        background: { type: "cherryBlossom", color: "340", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 60, scale: 1, turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "350", effectLayers: [], backgroundGradient: "", vignetteStrength: 12, vignetteColor: "0,0,18", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/62.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 0.8,
+          easing: "ease",
+        },
+        sources: [],
+        background: {
+          type: "morningDew",
+          color: "150",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 55,
+          scale: 1,
+          turbulence: 40,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "160",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 10,
+          vignetteColor: "0,0,15",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 64 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "zoomIn", duration: 0.8, easing: "ease" }, sources: [],
-        background: { type: "mintBreeze", color: "160", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 50, scale: 1, turbulence: 45, direction: 90, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "170", effectLayers: [], backgroundGradient: "", vignetteStrength: 8, vignetteColor: "0,0,12", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/63.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "slideLeft",
+          duration: 0.9,
+          easing: "ease",
+        },
+        sources: [],
+        background: {
+          type: "cherryBlossom",
+          color: "340",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 60,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "350",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 12,
+          vignetteColor: "0,0,18",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 65 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "dissolve", duration: 1.0, easing: "ease" }, sources: [],
-        background: { type: "freshSplash", color: "190", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 55, scale: 1, turbulence: 50, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "200", effectLayers: [], backgroundGradient: "", vignetteStrength: 10, vignetteColor: "0,0,15", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
+        src: "./pptx/64.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "zoomIn",
+          duration: 0.8,
+          easing: "ease",
+        },
+        sources: [],
+        background: {
+          type: "mintBreeze",
+          color: "160",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 50,
+          scale: 1,
+          turbulence: 45,
+          direction: 90,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "170",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 8,
+          vignetteColor: "0,0,12",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
       },
-      /* ── Slide 66 ── */
       {
-        src: "", loop: false, muted: true, transition: { type: "fade", duration: 1.0, easing: "ease" }, sources: [],
-        background: { type: "springBloom", color: "340", opacity: 1, blendMode: "screen", saturation: 100, brightness: 50, speed: 1, intensity: 50, scale: 1, turbulence: 40, direction: 180, secondaryEffect: null, secondaryOpacity: 0.5, secondaryColor: "280", effectLayers: [], backgroundGradient: "", vignetteStrength: 10, vignetteColor: "0,0,15", colorFilter: "", transitionType: "fade", chromaKey: "", chromaKeyThreshold: 50, motionBlur: 0, pixelate: 0, scanlines: false, scanlineIntensity: 30, filmGrain: 0 }
-      }
-    ]
+        src: "./pptx/65.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "dissolve",
+          duration: 1,
+          easing: "ease",
+        },
+        sources: [],
+        background: {
+          type: "freshSplash",
+          color: "190",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 55,
+          scale: 1,
+          turbulence: 50,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "200",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 10,
+          vignetteColor: "0,0,15",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
+      },
+      {
+        src: "./pptx/66.webm",
+        loop: false,
+        muted: true,
+        volume: null,
+        label: "",
+        notes: "",
+        script: "",
+        targetSeconds: null,
+        transition: {
+          type: "fade",
+          duration: 1,
+          easing: "ease",
+        },
+        sources: [],
+        background: {
+          type: "springBloom",
+          color: "340",
+          opacity: 1,
+          blendMode: "screen",
+          saturation: 100,
+          brightness: 50,
+          speed: 1,
+          intensity: 50,
+          scale: 1,
+          turbulence: 40,
+          direction: 180,
+          secondaryEffect: null,
+          secondaryOpacity: 0.5,
+          secondaryColor: "280",
+          effectLayers: [],
+          backgroundGradient: "",
+          vignetteStrength: 10,
+          vignetteColor: "0,0,15",
+          colorFilter: "",
+          transitionType: "fade",
+          chromaKey: "",
+          chromaKeyThreshold: 50,
+          motionBlur: 0,
+          pixelate: 0,
+          scanlines: false,
+          scanlineIntensity: 30,
+          filmGrain: 0,
+        },
+        autoAdvance: "inherit",
+        autoAdvanceDelay: null,
+      },
+    ],
   },
-
-  /* ── Controls ── */
   controls: {
     arrowNavigation: true,
     autoPlayFirst: true,
     autoAdvance: true,
-    autoAdvanceDelay: 0,
-    transitionDuration: 800,
+    autoAdvanceDelay: 4,
+    transitionDuration: 600,
     swipeNavigation: true,
     pauseOnHover: false,
     showSlideNumber: true,
@@ -2149,10 +3597,8 @@ export const CONFIG: EngineConfig = {
     randomTransitions: false,
     builderEnabled: true,
     previewPageEnabled: true,
-    remoteEnabled: true
+    remoteEnabled: true,
   },
-
-  /* ── Audio ── */
   audio: {
     enabled: false,
     volume: 1,
@@ -2162,10 +3608,8 @@ export const CONFIG: EngineConfig = {
     fadeOutDuration: 500,
     crossfade: false,
     crossfadeDuration: 1000,
-    globalMute: false
+    globalMute: false,
   },
-
-  /* ── Theme ── */
   theme: {
     primaryColor: "#ffffff",
     secondaryColor: "#888888",
@@ -2173,28 +3617,22 @@ export const CONFIG: EngineConfig = {
     fontFamily: "system-ui, sans-serif",
     uiOpacity: 0.95,
     uiPosition: "top-right",
-    darkMode: true
+    darkMode: true,
   },
-
-  /* ── Performance ── */
   performance: {
     maxFPS: 60,
     resolution: 1,
     enableGPU: true,
     maxParticles: 5000,
     enableBloom: false,
-    antialiasing: true
+    antialiasing: true,
   },
-
-  /* ── Export ── */
   export: {
     format: "json",
     includeAssets: false,
     minify: false,
-    embedVideos: false
+    embedVideos: false,
   },
-
-  /* ── Watermark ── */
   watermark: {
     enabled: false,
     mode: "text",
@@ -2208,22 +3646,12 @@ export const CONFIG: EngineConfig = {
     opacity: 0.3,
     fontSize: 14,
     color: "#ffffff",
-    rotation: 0
+    rotation: 0,
   },
-
-  /* ── Accessibility ── */
   accessibility: {
     reducedMotion: false,
     highContrast: false,
     screenReaderAnnouncements: false,
-    focusIndicators: true
-  }
+    focusIndicators: true,
+  },
 };
-
-// ── All slides now have explicit transitions — no fallback loop needed ──
-// ── Cycle video URLs: only 11 videos exist, reuse after slide 11 ──
-const VIDEO_BASE = "https://cdn.onslaught2342.qzz.io/assets/videos/pptx/";
-CONFIG.video.playlist.forEach((item, i) => {
-  const videoNum = (i % 11) + 1;
-  item.src = `${VIDEO_BASE}${videoNum}.webm`;
-});
